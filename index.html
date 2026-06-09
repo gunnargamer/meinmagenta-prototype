@@ -4,16 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>MeinMagenta</title>
-
-  <!-- PWA / iOS Home Screen -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="MeinMagenta" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#E20074" />
+  <meta name="theme-color" content="#FCFDFE" />
   <link rel="manifest" href="/manifest.json" />
-
-  <!-- iOS Touch Icon (generated inline as SVG→PNG via canvas would need server; use solid magenta) -->
   <link rel="apple-touch-icon" href="/icon.png" />
   <link rel="icon" href="/icon.png" />
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -23,12 +19,12 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #1a1a2e;
+      background: #111827;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'TeleNeo Var', -apple-system, 'Helvetica Neue', Arial, sans-serif;
     }
 
     #root {
@@ -37,409 +33,287 @@
       position: relative;
       overflow: hidden;
       background: #FCFDFE;
-      border-radius: 48px;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.1);
+      border-radius: 50px;
+      box-shadow:
+        0 0 0 10px #1c1c1e,
+        0 0 0 12px #3a3a3c,
+        0 40px 80px rgba(0,0,0,0.7);
     }
 
-    /* ── On a real iPhone (standalone PWA or narrow viewport) ── */
     @media (max-width: 430px) {
-      body {
-        background: #FCFDFE;
-        display: block;
-        min-height: 100dvh;
-        padding: 0;
-      }
-      #root {
-        width: 100%;
-        height: 100dvh;
-        border-radius: 0;
-        box-shadow: none;
-      }
+      body { background: #FCFDFE; display: block; min-height: 100dvh; }
+      #root { width: 100%; height: 100dvh; border-radius: 0; box-shadow: none; }
     }
 
-    /* Safe area insets for notch / Dynamic Island / home indicator */
     @supports (padding-top: env(safe-area-inset-top)) {
       @media (max-width: 430px) {
         #root { padding-top: env(safe-area-inset-top); }
       }
     }
 
-    /* Scrollable areas */
-    .scroll-area {
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
+    .scroll-area { overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
     .scroll-area::-webkit-scrollbar { display: none; }
 
-    /* Animations */
     @keyframes slideUp {
-      from { transform: translateY(100%); opacity: 0; }
-      to   { transform: translateY(0);   opacity: 1; }
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
     }
     @keyframes slideInRight {
       from { transform: translateX(100%); }
       to   { transform: translateX(0); }
     }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.45; } }
 
-    .slide-up    { animation: slideUp 0.32s cubic-bezier(0.32, 0.72, 0, 1); }
-    .slide-right { animation: slideInRight 0.28s cubic-bezier(0.32, 0.72, 0, 1); }
-    .fade-in     { animation: fadeIn 0.2s ease; }
+    .slide-up    { animation: slideUp 0.34s cubic-bezier(0.32,0.72,0,1); }
+    .slide-right { animation: slideInRight 0.28s cubic-bezier(0.32,0.72,0,1); }
+    .fade-in     { animation: fadeIn 0.18s ease; }
 
-    /* Tap highlight suppression */
     * { -webkit-tap-highlight-color: transparent; }
-
     button { border: none; background: none; cursor: pointer; padding: 0; }
+
+    input { font-family: inherit; }
   </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useRef } = React;
+const { useState, useRef } = React;
 
-/* ─── Design Tokens ─────────────────────────────────────────── */
+/* ─── Design Tokens ───────────────────────────────────────── */
 const T = {
-  accent:            '#E20074',
-  text:              '#000000',
-  textRecessive:     '#616161',
-  textLink:          '#E20074',
-  bg:                '#FCFDFE',
-  bgSubtle:          '#F1F1F1',
-  bgCard:            '#4AD9CD',
-  stroke:            '#B6B6B6',
-  red:               '#FF1000',
-  success:           '#007845',
-  warning:           '#D05500',
-  destructive:       '#C20D00',
-  white:             '#FFFFFF',
+  accent:        '#E20074',
+  accentDark:    '#B8005E',
+  text:          '#000000',
+  textSub:       '#616161',
+  textLink:      '#E20074',
+  bg:            '#FCFDFE',
+  bgSubtle:      '#F1F1F1',
+  bgCard:        '#4AD9CD',
+  stroke:        '#E0E0E0',
+  red:           '#FF1000',
+  success:       '#007845',
+  warning:       '#D05500',
+  destructive:   '#C20D00',
+  white:         '#FFFFFF',
+  black:         '#000000',
 };
 
-/* ─── Mock Data ──────────────────────────────────────────────── */
-const NOTIFICATIONS_DATA = [
-  {
-    id: '1', type: 'invoice',
-    headline: 'Your internet bill went up €4.20',
-    summary: 'Your 6-month discount ended on 1 June.',
-    service: 'MagentaZuhause · Internet', date: '08 Jun',
-    status: 'actionRequired', isRead: false, hasDocument: true,
-  },
-  {
-    id: '2', type: 'contract',
-    headline: 'Your mobile contract was updated.',
-    summary: 'No changes to your costs.',
-    service: 'Magenta XL · Mobile', date: '06 Jun',
-    status: 'noActionNeeded', isRead: true, hasDocument: true,
-  },
-  {
-    id: '3', type: 'order',
-    headline: 'Your fibre order is confirmed.',
-    summary: 'Installation scheduled for 15 Jun.',
-    service: 'MagentaZuhause · Internet', date: '05 Jun',
-    status: 'noActionNeeded', isRead: false, hasDocument: false,
-  },
-  {
-    id: '4', type: 'account',
-    headline: 'Confirm your new bank details by 15 Jun.',
-    summary: '',
-    service: 'Account', date: '04 Jun',
-    status: 'actionRequired', isRead: false, hasDocument: false,
-  },
+/* ─── Mock Notifications ──────────────────────────────────── */
+const NOTIFS = [
+  { id:'1', type:'invoice',  headline:'Your internet bill went up €4.20',
+    summary:'Your 6-month discount ended on 1 June.',
+    service:'MagentaZuhause · Internet', date:'08 Jun',
+    status:'actionRequired', isRead:false, hasDocument:true },
+  { id:'2', type:'contract', headline:'Your mobile contract was updated.',
+    summary:'No changes to your costs.',
+    service:'Magenta XL · Mobile', date:'06 Jun',
+    status:'noActionNeeded', isRead:true, hasDocument:true },
+  { id:'3', type:'order',    headline:'Your fibre order is confirmed.',
+    summary:'Installation scheduled for 15 Jun.',
+    service:'MagentaZuhause · Internet', date:'05 Jun',
+    status:'noActionNeeded', isRead:false, hasDocument:false },
+  { id:'4', type:'account',  headline:'Confirm your new bank details by 15 Jun.',
+    summary:'',
+    service:'Account', date:'04 Jun',
+    status:'actionRequired', isRead:false, hasDocument:false },
 ];
 
-/* ─── Icons (inline SVG) ─────────────────────────────────────── */
-const Icon = {
-  Back: () => (
+/* ─── SVG Icons (ODS-matched) ─────────────────────────────── */
+const Ic = {
+  /* Bottom nav – Overview: filled house */
+  Home: ({ active }) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      {active
+        ? <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V10.5Z" fill={T.accent}/>
+        : <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V10.5Z" stroke={T.textSub} strokeWidth="1.6" fill="none"/>
+      }
+      <path d="M9 22V13h6v9" stroke={active ? T.white : T.textSub} strokeWidth="1.6" strokeLinecap="round"/>
     </svg>
   ),
-  Bell: ({ size = 22, color = 'currentColor' }) => (
+  /* Moments: heart */
+  Heart: ({ active }) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+        stroke={active ? T.accent : T.textSub} strokeWidth="1.6"
+        fill={active ? T.accent+'25' : 'none'}/>
+    </svg>
+  ),
+  /* Magenta AI: dotted/sparkle circle */
+  AI: ({ active }) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="8" stroke={active ? T.accent : T.textSub} strokeWidth="1.6" strokeDasharray="2.5 2"/>
+      <circle cx="12" cy="12" r="2.5" fill={active ? T.accent : T.textSub}/>
+    </svg>
+  ),
+  /* Support: circle with ? */
+  Support: ({ active }) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke={active ? T.accent : T.textSub} strokeWidth="1.6"/>
+      <path d="M9.5 9.5a2.5 2.5 0 0 1 4.9.8c0 1.7-2.4 2.2-2.4 4" stroke={active ? T.accent : T.textSub} strokeWidth="1.6" strokeLinecap="round"/>
+      <circle cx="12" cy="17" r="0.8" fill={active ? T.accent : T.textSub}/>
+    </svg>
+  ),
+  Bell: ({ size=20, color=T.textSub }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke={color} strokeWidth="1.7" strokeLinecap="round"/>
     </svg>
   ),
   Settings: () => (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8"/>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" strokeWidth="1.8"/>
-    </svg>
-  ),
-  LogOut: () => (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-      <polyline points="16 17 21 12 16 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+      <circle cx="12" cy="12" r="3" stroke={T.textSub} strokeWidth="1.7"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke={T.textSub} strokeWidth="1.7"/>
     </svg>
   ),
   Grid: () => (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <rect x="3" y="3" width="7" height="7" stroke="currentColor" strokeWidth="1.8" rx="1"/>
-      <rect x="14" y="3" width="7" height="7" stroke="currentColor" strokeWidth="1.8" rx="1"/>
-      <rect x="14" y="14" width="7" height="7" stroke="currentColor" strokeWidth="1.8" rx="1"/>
-      <rect x="3" y="14" width="7" height="7" stroke="currentColor" strokeWidth="1.8" rx="1"/>
+      <rect x="3" y="3" width="7" height="7" rx="1.5" stroke={T.textSub} strokeWidth="1.7"/>
+      <rect x="14" y="3" width="7" height="7" rx="1.5" stroke={T.textSub} strokeWidth="1.7"/>
+      <rect x="14" y="14" width="7" height="7" rx="1.5" stroke={T.textSub} strokeWidth="1.7"/>
+      <rect x="3" y="14" width="7" height="7" rx="1.5" stroke={T.textSub} strokeWidth="1.7"/>
     </svg>
   ),
   Package: () => (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <line x1="16.5" y1="9.4" x2="7.5" y2="4.21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke="currentColor" strokeWidth="1.8"/>
-      <polyline points="3.27 6.96 12 12.01 20.73 6.96" stroke="currentColor" strokeWidth="1.8"/>
-      <line x1="12" y1="22.08" x2="12" y2="12" stroke="currentColor" strokeWidth="1.8"/>
+      <polyline points="21 8 21 16 12 21 3 16 3 8 12 3 21 8" stroke={T.textSub} strokeWidth="1.7" strokeLinejoin="round"/>
+      <polyline points="3.27 6.96 12 12 20.73 6.96" stroke={T.textSub} strokeWidth="1.7"/>
+      <line x1="12" y1="22" x2="12" y2="12" stroke={T.textSub} strokeWidth="1.7"/>
+    </svg>
+  ),
+  LogOut: () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke={T.destructive} strokeWidth="1.7" strokeLinecap="round"/>
+      <polyline points="16 17 21 12 16 7" stroke={T.destructive} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <line x1="21" y1="12" x2="9" y2="12" stroke={T.destructive} strokeWidth="1.7" strokeLinecap="round"/>
+    </svg>
+  ),
+  ChevronRight: ({ color=T.stroke }) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M9 18l6-6-6-6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  ChevronDown: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M6 9l6 6 6-6" stroke={T.textSub} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Back: () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M15 18l-6-6 6-6" stroke={T.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
   Search: () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.8"/>
-      <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+      <circle cx="11" cy="11" r="8" stroke={T.textSub} strokeWidth="1.7"/>
+      <line x1="21" y1="21" x2="16.65" y2="16.65" stroke={T.textSub} strokeWidth="1.7" strokeLinecap="round"/>
     </svg>
   ),
-  Chevron: ({ dir = 'right' }) => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-      style={{ transform: dir === 'down' ? 'rotate(90deg)' : dir === 'up' ? 'rotate(-90deg)' : 'none' }}>
-      <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  ),
-  Home: ({ active }) => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
-        stroke={active ? T.accent : T.textRecessive} strokeWidth="1.8"
-        fill={active ? T.accent + '20' : 'none'}/>
-      <polyline points="9 22 9 12 15 12 15 22" stroke={active ? T.accent : T.textRecessive} strokeWidth="1.8"/>
-    </svg>
-  ),
-  Star: ({ active }) => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-        stroke={active ? T.accent : T.textRecessive} strokeWidth="1.8"
-        fill={active ? T.accent + '20' : 'none'}/>
-    </svg>
-  ),
-  AI: ({ active }) => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"
-        stroke={active ? T.accent : T.textRecessive} strokeWidth="1.8"
-        fill={active ? T.accent + '20' : 'none'}/>
-      <path d="M8 12h8M12 8v8" stroke={active ? T.accent : T.textRecessive} strokeWidth="1.8" strokeLinecap="round"/>
-    </svg>
-  ),
-  Support: ({ active }) => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" stroke={active ? T.accent : T.textRecessive} strokeWidth="1.8"
-        fill={active ? T.accent + '20' : 'none'}/>
-      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" stroke={active ? T.accent : T.textRecessive} strokeWidth="1.8" strokeLinecap="round"/>
-      <line x1="12" y1="17" x2="12.01" y2="17" stroke={active ? T.accent : T.textRecessive} strokeWidth="2.5" strokeLinecap="round"/>
+  X: ({ color=T.textSub }) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <line x1="18" y1="6" x2="6" y2="18" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+      <line x1="6" y1="6" x2="18" y2="18" stroke={color} strokeWidth="2" strokeLinecap="round"/>
     </svg>
   ),
   Doc: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="1.8"/>
-      <polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="1.8"/>
-    </svg>
-  ),
-  X: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-      <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke={T.textSub} strokeWidth="1.7"/>
+      <polyline points="14 2 14 8 20 8" stroke={T.textSub} strokeWidth="1.7"/>
     </svg>
   ),
   Check: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-      <polyline points="20 6 9 17 4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+      <polyline points="20 6 9 17 4 12" stroke={T.white} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Arrow: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M5 12h14M12 5l7 7-7 7" stroke={T.text} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
   ThumbUp: ({ filled }) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill={filled ? T.success : 'none'}>
-      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"
-        stroke={filled ? T.success : 'currentColor'} strokeWidth="1.8"/>
-      <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
-        stroke={filled ? T.success : 'currentColor'} strokeWidth="1.8"/>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill={filled ? T.success : 'none'}>
+      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" stroke={filled ? T.success : T.textSub} strokeWidth="1.7"/>
+      <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" stroke={filled ? T.success : T.textSub} strokeWidth="1.7"/>
     </svg>
   ),
   ThumbDown: ({ filled }) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill={filled ? T.destructive : 'none'}>
-      <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"
-        stroke={filled ? T.destructive : 'currentColor'} strokeWidth="1.8"/>
-      <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"
-        stroke={filled ? T.destructive : 'currentColor'} strokeWidth="1.8"/>
-    </svg>
-  ),
-  Warning: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-        stroke={T.warning} strokeWidth="1.8" fill={T.warning + '20'}/>
-      <line x1="12" y1="9" x2="12" y2="13" stroke={T.warning} strokeWidth="1.8" strokeLinecap="round"/>
-      <line x1="12" y1="17" x2="12.01" y2="17" stroke={T.warning} strokeWidth="2.5" strokeLinecap="round"/>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill={filled ? T.destructive : 'none'}>
+      <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z" stroke={filled ? T.destructive : T.textSub} strokeWidth="1.7"/>
+      <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" stroke={filled ? T.destructive : T.textSub} strokeWidth="1.7"/>
     </svg>
   ),
 };
 
-/* ─── ODS Badge Number ───────────────────────────────────────── */
-function ODSBadgeNumber({ count, size = 'default' }) {
-  if (!count) return null;
-  const small = size === 'small';
+/* ─── Status Bar ──────────────────────────────────────────── */
+function StatusBar() {
   return (
-    <div style={{
-      background: T.red,
-      color: T.white,
-      borderRadius: 999,
-      minWidth: small ? 16 : 20,
-      height: small ? 16 : 20,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: small ? 10 : 11,
-      fontWeight: 700,
-      padding: '0 4px',
-      lineHeight: 1,
-      border: `2px solid ${T.white}`,
-    }}>
-      {count}
-    </div>
-  );
-}
-
-/* ─── ODS Tag Static ─────────────────────────────────────────── */
-function ODSTagStatic({ label, variant = 'default', size = 'default' }) {
-  const styles = {
-    actionRequired: { bg: T.accent + '15', color: T.accent, border: `1px solid ${T.accent}40` },
-    noActionNeeded: { bg: T.bgSubtle,       color: T.textRecessive, border: `1px solid ${T.stroke}` },
-    service:        { bg: T.bgSubtle,       color: T.textRecessive, border: `1px solid ${T.stroke}` },
-    success:        { bg: T.success + '15', color: T.success, border: `1px solid ${T.success}40` },
-    default:        { bg: T.bgSubtle,       color: T.textRecessive, border: `1px solid ${T.stroke}` },
-  };
-  const s = styles[variant] || styles.default;
-  return (
-    <span style={{
-      background: s.bg, color: s.color, border: s.border,
-      borderRadius: 999, padding: size === 'small' ? '2px 8px' : '3px 10px',
-      fontSize: size === 'small' ? 11 : 12, fontWeight: 600, lineHeight: '15.6px',
-      whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4,
-    }}>
-      {label}
-    </span>
-  );
-}
-
-/* ─── ODS Button ─────────────────────────────────────────────── */
-function ODSButton({ label, variant = 'primary', size = 'default', onClick, fullWidth }) {
-  const [pressed, setPressed] = useState(false);
-  const isPrimary = variant === 'primary';
-  const isSmall = size === 'small';
-  return (
-    <button
-      onMouseDown={() => setPressed(true)}
-      onMouseUp={() => setPressed(false)}
-      onTouchStart={() => setPressed(true)}
-      onTouchEnd={() => setPressed(false)}
-      onClick={onClick}
-      style={{
-        background: pressed
-          ? (isPrimary ? '#B8005E' : T.bgSubtle)
-          : (isPrimary ? T.accent : T.white),
-        color: isPrimary ? T.white : T.accent,
-        border: isPrimary ? 'none' : `1.5px solid ${T.accent}`,
-        borderRadius: 999, cursor: 'pointer',
-        padding: isSmall ? '8px 16px' : '12px 24px',
-        fontSize: isSmall ? 14 : 16,
-        fontWeight: 655, lineHeight: '20px',
-        minHeight: 48, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        width: fullWidth ? '100%' : 'auto',
-        transition: 'background 0.1s',
-        gap: 6,
-      }}>
-      {label}
-    </button>
-  );
-}
-
-/* ─── ODS Avatar ─────────────────────────────────────────────── */
-function ODSAvatar({ size = 40, initials = 'JM', color = T.accent }) {
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%',
-      background: color, color: T.white,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.35, fontWeight: 700, flexShrink: 0,
-    }}>
-      {initials}
-    </div>
-  );
-}
-
-/* ─── Status Bar ─────────────────────────────────────────────── */
-function StatusBar({ dark }) {
-  return (
-    <div style={{
-      height: 44, display: 'flex', alignItems: 'center',
-      justifyContent: 'space-between', padding: '0 24px',
-      color: dark ? T.white : T.text,
-      background: dark ? 'transparent' : 'transparent',
-      flexShrink: 0,
-    }}>
-      <span style={{ fontSize: 15, fontWeight: 600 }}>9:41</span>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        <svg width="16" height="12" viewBox="0 0 16 12" fill={dark ? T.white : T.text}>
-          <rect x="0" y="6" width="3" height="6" rx="0.5"/>
-          <rect x="4.5" y="4" width="3" height="8" rx="0.5"/>
+    <div style={{ height:50, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 28px 0 24px', flexShrink:0 }}>
+      <span style={{ fontSize:15, fontWeight:600, letterSpacing:0.2 }}>9:41</span>
+      <div style={{ display:'flex', gap:7, alignItems:'center' }}>
+        {/* Signal bars */}
+        <svg width="17" height="12" viewBox="0 0 17 12" fill={T.text}>
+          <rect x="0" y="7" width="3" height="5" rx="0.5"/>
+          <rect x="4.5" y="4.5" width="3" height="7.5" rx="0.5"/>
           <rect x="9" y="2" width="3" height="10" rx="0.5"/>
-          <rect x="13.5" y="0" width="3" height="12" rx="0.5" opacity="0.3"/>
+          <rect x="13.5" y="0" width="3" height="12" rx="0.5" opacity="0.28"/>
         </svg>
-        <svg width="16" height="12" viewBox="0 0 16 12" fill={dark ? T.white : T.text}>
-          <path d="M8 2.5C10.5 2.5 12.7 3.7 14.1 5.5L15.5 4C13.7 1.8 11 0.5 8 0.5C5 0.5 2.3 1.8 0.5 4L1.9 5.5C3.3 3.7 5.5 2.5 8 2.5Z" opacity="0.3"/>
-          <path d="M8 5.5C9.7 5.5 11.2 6.2 12.3 7.4L13.7 5.9C12.2 4.4 10.2 3.5 8 3.5C5.8 3.5 3.8 4.4 2.3 5.9L3.7 7.4C4.8 6.2 6.3 5.5 8 5.5Z"/>
-          <path d="M8 8.5C9.1 8.5 10 8.9 10.7 9.6L8 12.5L5.3 9.6C6 8.9 6.9 8.5 8 8.5Z"/>
+        {/* WiFi */}
+        <svg width="16" height="12" viewBox="0 0 16 12" fill={T.text}>
+          <path d="M8 9.5C8.9 9.5 9.6 10.2 9.6 11.1C9.6 12 8.9 12.7 8 12.7C7.1 12.7 6.4 12 6.4 11.1C6.4 10.2 7.1 9.5 8 9.5Z" transform="scale(1,0.9)"/>
+          <path d="M8 6.5C9.8 6.5 11.3 7.3 12.3 8.6L13.5 7.3C12.1 5.6 10.2 4.5 8 4.5C5.8 4.5 3.9 5.6 2.5 7.3L3.7 8.6C4.7 7.3 6.2 6.5 8 6.5Z"/>
+          <path d="M8 3.5C11 3.5 13.6 4.9 15.2 7.1L16 6.1C14.1 3.6 11.2 2 8 2C4.8 2 1.9 3.6 0 6.1L0.8 7.1C2.4 4.9 5 3.5 8 3.5Z" opacity="0.4"/>
         </svg>
-        <div style={{
-          width: 25, height: 12, border: `1.5px solid ${dark ? T.white : T.text}`,
-          borderRadius: 3, position: 'relative', display: 'flex', alignItems: 'center',
-        }}>
-          <div style={{
-            position: 'absolute', right: -4, top: '50%', transform: 'translateY(-50%)',
-            width: 3, height: 6, background: dark ? T.white : T.text, borderRadius: '0 1px 1px 0',
-          }}/>
-          <div style={{
-            width: '75%', height: '60%', background: dark ? T.white : T.text,
-            borderRadius: 1, margin: '0 2px',
-          }}/>
+        {/* Battery */}
+        <div style={{ display:'flex', alignItems:'center', gap:1 }}>
+          <div style={{ width:24, height:12, border:`1.5px solid ${T.text}`, borderRadius:3.5, padding:'1.5px', position:'relative' }}>
+            <div style={{ width:'78%', height:'100%', background:T.text, borderRadius:1.5 }}/>
+          </div>
+          <div style={{ width:2, height:6, background:T.text, borderRadius:'0 1px 1px 0', opacity:0.4 }}/>
         </div>
       </div>
     </div>
   );
 }
 
-/* ─── ODS Bottom Navigation ──────────────────────────────────── */
-function ODSBottomNav({ active = 'overview' }) {
+/* ─── T Logo (ODS-accurate: flat magenta T) ───────────────── */
+function TLogo() {
+  return (
+    <div style={{ width:36, height:36, display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <svg width="28" height="34" viewBox="0 0 28 34" fill="none">
+        <rect x="0" y="0" width="28" height="6" rx="0" fill={T.accent}/>
+        <rect x="11" y="0" width="6" height="34" rx="0" fill={T.accent}/>
+      </svg>
+    </div>
+  );
+}
+
+/* ─── ODS Bottom Navigation ───────────────────────────────── */
+function ODSBottomNav({ active='overview' }) {
   const tabs = [
-    { id: 'overview', label: 'Overview',   Icon: ({ a }) => <Icon.Home active={a} /> },
-    { id: 'moments',  label: 'Moments',    Icon: ({ a }) => <Icon.Star active={a} /> },
-    { id: 'ai',       label: 'Magenta AI', Icon: ({ a }) => <Icon.AI active={a} /> },
-    { id: 'support',  label: 'Support',    Icon: ({ a }) => <Icon.Support active={a} /> },
+    { id:'overview', label:'Overview',   Icon:Ic.Home    },
+    { id:'moments',  label:'Moments',    Icon:Ic.Heart   },
+    { id:'ai',       label:'Magenta AI', Icon:Ic.AI      },
+    { id:'support',  label:'Support',    Icon:Ic.Support },
   ];
   return (
     <div style={{
-      position: 'absolute', bottom: 0, left: 0, right: 0,
-      background: T.white, borderTop: `1px solid ${T.stroke}20`,
-      display: 'flex', height: 83, paddingBottom: 20,
-      boxShadow: '0 -2px 12px rgba(0,0,0,0.06)',
+      position:'absolute', bottom:0, left:0, right:0,
+      background:T.white,
+      borderTop:`1px solid ${T.stroke}`,
+      display:'flex', height:83, paddingBottom:22,
+      zIndex:5,
     }}>
-      {tabs.map(({ id, label, Icon: TabIcon }) => {
-        const isActive = active === id;
+      {tabs.map(({ id, label, Icon }) => {
+        const on = active === id;
         return (
           <div key={id} style={{
-            flex: 1, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', gap: 3,
-            color: isActive ? T.accent : T.textRecessive,
-            cursor: 'pointer', minHeight: 48,
+            flex:1, display:'flex', flexDirection:'column', alignItems:'center',
+            justifyContent:'center', gap:3, cursor:'pointer', minHeight:48,
+            color: on ? T.accent : T.textSub,
           }}>
-            <TabIcon a={isActive} />
-            <span style={{ fontSize: 10, fontWeight: isActive ? 655 : 500, lineHeight: 1 }}>
+            <Icon active={on} />
+            <span style={{ fontSize:10, fontWeight: on ? 700 : 500, lineHeight:1, letterSpacing:0.1 }}>
               {label}
             </span>
           </div>
@@ -449,141 +323,267 @@ function ODSBottomNav({ active = 'overview' }) {
   );
 }
 
-/* ─── SCREEN 1: Overview ─────────────────────────────────────── */
-function OverviewScreen({ onAvatarTap, notifCount }) {
-  const [criticalCollapsed, setCriticalCollapsed] = useState(false);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
+/* ─── ODS Badge Number ────────────────────────────────────── */
+function Badge({ n, size='md' }) {
+  if (!n) return null;
+  const sm = size === 'sm';
   return (
-    <div style={{ height: '100%', background: T.bg, display: 'flex', flexDirection: 'column' }}>
+    <div style={{
+      background:T.red, color:T.white, borderRadius:999,
+      minWidth: sm ? 16 : 20, height: sm ? 16 : 20,
+      display:'flex', alignItems:'center', justifyContent:'center',
+      fontSize: sm ? 10 : 11, fontWeight:700, padding:'0 4px', lineHeight:1,
+      border:`2px solid ${T.white}`,
+    }}>{n}</div>
+  );
+}
+
+/* ─── ODS Tag / Chip ──────────────────────────────────────── */
+function Chip({ label, variant='default', sm }) {
+  const map = {
+    actionRequired: { bg:T.accent+'18', color:T.accent,    border:`1px solid ${T.accent}50` },
+    noActionNeeded: { bg:T.bgSubtle,    color:T.textSub,   border:`1px solid ${T.stroke}` },
+    service:        { bg:T.bgSubtle,    color:T.textSub,   border:`1px solid ${T.stroke}` },
+    success:        { bg:T.success+'18',color:T.success,   border:`1px solid ${T.success}50` },
+    default:        { bg:T.bgSubtle,    color:T.textSub,   border:`1px solid ${T.stroke}` },
+  };
+  const s = map[variant] || map.default;
+  return (
+    <span style={{
+      ...s, borderRadius:999,
+      padding: sm ? '2px 8px' : '3px 10px',
+      fontSize: sm ? 11 : 12, fontWeight:600, lineHeight:'16px',
+      whiteSpace:'nowrap', display:'inline-flex', alignItems:'center', gap:4,
+    }}>{label}</span>
+  );
+}
+
+/* ─── ODS Button ──────────────────────────────────────────── */
+function Btn({ label, variant='primary', sm, full, onClick }) {
+  const [press, setPress] = useState(false);
+  const pri = variant === 'primary';
+  return (
+    <button
+      onMouseDown={()=>setPress(true)} onMouseUp={()=>setPress(false)}
+      onTouchStart={()=>setPress(true)} onTouchEnd={()=>setPress(false)}
+      onClick={onClick}
+      style={{
+        background: press ? (pri ? T.accentDark : T.bgSubtle) : (pri ? T.accent : T.white),
+        color: pri ? T.white : T.accent,
+        border: pri ? 'none' : `1.5px solid ${T.accent}`,
+        borderRadius:999, cursor:'pointer',
+        padding: sm ? '8px 18px' : '12px 28px',
+        fontSize: sm ? 14 : 16, fontWeight:655, lineHeight:'20px',
+        minHeight: sm ? 36 : 48,
+        display:'inline-flex', alignItems:'center', justifyContent:'center',
+        width: full ? '100%' : 'auto',
+        transition:'background 0.12s',
+      }}>{label}</button>
+  );
+}
+
+/* ─── Data usage bar (ODS card detail) ───────────────────── */
+function DataBar({ pct=0.72 }) {
+  return (
+    <div>
+      <p style={{ fontSize:14, fontWeight:500, color:T.text, marginBottom:6 }}>
+        <strong style={{ fontWeight:700 }}>4.2 GB</strong> left
+      </p>
+      <div style={{ height:4, borderRadius:999, background:T.stroke, overflow:'hidden' }}>
+        <div style={{ width:`${pct*100}%`, height:'100%', background:T.text, borderRadius:999 }}/>
+      </div>
+    </div>
+  );
+}
+
+/* ─── SCREEN 1: Overview ──────────────────────────────────── */
+function OverviewScreen({ onAvatar, unread }) {
+  const [critDismissed, setCritDismissed] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [activeTab, setActiveTab] = useState('Mobile');
+
+  return (
+    <div style={{ height:'100%', background:T.bg, display:'flex', flexDirection:'column' }}>
       <StatusBar />
 
-      {/* Top bar */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '4px 20px 12px',
-      }}>
-        {/* T Logo */}
-        <div style={{
-          width: 36, height: 36, background: T.accent, borderRadius: 8,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: T.white, fontSize: 20, fontWeight: 900,
-        }}>T</div>
+      {/* ── Top bar ── */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'2px 20px 10px' }}>
+        <TLogo />
 
-        {/* Profile avatar with badge */}
-        <button
-          onClick={onAvatarTap}
-          style={{ position: 'relative', background: 'none', cursor: 'pointer', padding: 4 }}>
-          <ODSAvatar size={40} initials="JM" />
-          <div style={{ position: 'absolute', top: 0, right: 0 }}>
-            <ODSBadgeNumber count={notifCount} />
+        {/* Right: M-badge + avatar */}
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          {/* M-circle (Moments badge — from ODS) */}
+          <div style={{
+            width:36, height:36, borderRadius:'50%', background:T.accent,
+            display:'flex', alignItems:'center', justifyContent:'center',
+            position:'relative',
+          }}>
+            <span style={{ color:T.white, fontSize:13, fontWeight:800, letterSpacing:-0.5 }}>M</span>
+            <div style={{ position:'absolute', top:-2, right:-2 }}>
+              <div style={{ background:T.red, width:16, height:16, borderRadius:'50%', border:`2px solid ${T.white}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <span style={{ color:T.white, fontSize:9, fontWeight:700 }}>1</span>
+              </div>
+            </div>
           </div>
-        </button>
+
+          {/* Avatar with notif badge */}
+          <button onClick={onAvatar} style={{ position:'relative', cursor:'pointer' }}>
+            {/* Avatar circle with gradient to simulate photo */}
+            <div style={{
+              width:38, height:38, borderRadius:'50%',
+              background:'linear-gradient(135deg, #c8a882 0%, #a0785a 100%)',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              overflow:'hidden', border:`2px solid ${T.white}`,
+              boxShadow:'0 1px 4px rgba(0,0,0,0.15)',
+            }}>
+              {/* Stylised silhouette */}
+              <svg width="38" height="38" viewBox="0 0 38 38">
+                <circle cx="19" cy="19" r="19" fill="#b8895a"/>
+                <circle cx="19" cy="15" r="7" fill="#e8c49a"/>
+                <ellipse cx="19" cy="36" rx="12" ry="9" fill="#e8c49a"/>
+              </svg>
+            </div>
+            <div style={{ position:'absolute', top:-3, right:-3 }}>
+              <Badge n={unread} />
+            </div>
+          </button>
+        </div>
       </div>
 
-      {/* Scrollable content */}
-      <div className="scroll-area" style={{ flex: 1, padding: '0 16px', paddingBottom: 100 }}>
-        {/* Welcome */}
-        <div style={{ marginBottom: 20 }}>
-          <p style={{ fontSize: 14, color: T.textRecessive, fontWeight: 500 }}>Welcome back,</p>
-          <h1 style={{ fontSize: 28, fontWeight: 655, color: T.text, lineHeight: '32px' }}>Jana Meyer</h1>
-        </div>
+      {/* ── Welcome + sub-tabs ── */}
+      <div style={{ padding:'0 20px 4px' }}>
+        <p style={{ fontSize:14, fontWeight:500, color:T.text, lineHeight:'18px' }}>Welcome back,</p>
+        <h1 style={{ fontSize:28, fontWeight:800, color:T.text, lineHeight:'32px', letterSpacing:-0.3 }}>Jana Meyer</h1>
 
-        {/* Critical notification card (dark) */}
-        {!criticalCollapsed && (
-          <div style={{
-            background: '#1A1A2E', borderRadius: 16, padding: 16, marginBottom: 16,
-            color: T.white,
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <div style={{
-                  width: 8, height: 8, borderRadius: '50%', background: T.red,
-                  animation: 'pulse 2s infinite',
-                }}/>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                  Action required
-                </span>
+        {/* ODS sub-tabs: Mobile · Home · TV */}
+        <div style={{ display:'flex', gap:0, marginTop:10, borderBottom:`1px solid ${T.stroke}` }}>
+          {['Mobile','Home','TV'].map(tab => (
+            <button key={tab} onClick={()=>setActiveTab(tab)} style={{
+              padding:'6px 16px 8px',
+              fontSize:14, fontWeight:700,
+              color: activeTab===tab ? T.accent : T.textSub,
+              borderBottom: activeTab===tab ? `2.5px solid ${T.accent}` : '2.5px solid transparent',
+              marginBottom:-1, cursor:'pointer', background:'none',
+              transition:'color 0.15s',
+              display:'flex', alignItems:'center', gap:5,
+            }}>
+              {tab}
+              {tab==='Home' && (
+                <span style={{ width:7, height:7, borderRadius:'50%', background:T.accent, display:'inline-block', marginLeft:2 }}/>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Scrollable content ── */}
+      <div className="scroll-area" style={{ flex:1, padding:'12px 16px', paddingBottom:100 }}>
+
+        {/* Critical card (dark, dismissable) */}
+        {!critDismissed && (
+          <div style={{ background:'#0F0F1A', borderRadius:16, padding:16, marginBottom:14, color:T.white }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
+              <div style={{ display:'flex', gap:7, alignItems:'center' }}>
+                <div style={{ width:8, height:8, borderRadius:'50%', background:T.red, animation:'pulse 2s infinite' }}/>
+                <span style={{ fontSize:12, fontWeight:700, color:'#aaa', textTransform:'uppercase', letterSpacing:0.6 }}>Action required</span>
               </div>
-              <button onClick={() => setCriticalCollapsed(true)} style={{ color: '#aaa', cursor: 'pointer' }}>
-                <Icon.X />
+              <button onClick={()=>setCritDismissed(true)} style={{ color:'#888', cursor:'pointer', padding:2 }}>
+                <Ic.X color="#888" />
               </button>
             </div>
-            <p style={{ fontSize: 16, fontWeight: 655, lineHeight: '20px', marginBottom: 4 }}>
-              Your bills are ready
-            </p>
-            <p style={{ fontSize: 14, color: '#bbb', marginBottom: 14, lineHeight: '17.5px' }}>
-              2 invoices are awaiting payment. Due by 15 Jun.
-            </p>
-            <ODSButton label="View bills" size="small" />
+            <p style={{ fontSize:17, fontWeight:700, lineHeight:'22px', marginBottom:4 }}>Your bills are ready</p>
+            <p style={{ fontSize:13, color:'#bbb', lineHeight:'17px', marginBottom:14 }}>2 invoices awaiting payment · Due 15 Jun</p>
+            <Btn label="View bills" sm />
           </div>
         )}
 
-        {/* Contract card with inline service notification */}
-        <div style={{
-          background: T.bgCard, borderRadius: 16, overflow: 'hidden', marginBottom: 16,
-        }}>
-          <div style={{ padding: '16px 16px 12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <p style={{ fontSize: 12, fontWeight: 600, color: '#005' }}>Magenta XL · Mobile</p>
-                <p style={{ fontSize: 18, fontWeight: 655, color: T.text, marginTop: 2 }}>Unlimited Data</p>
+        {/* ── Active contract card (teal, ODS-accurate) ── */}
+        <div style={{ background:T.bgCard, borderRadius:16, overflow:'hidden', marginBottom:12 }}>
+          <div style={{ padding:'16px 16px 14px' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+              <div style={{ flex:1 }}>
+                <p style={{ fontSize:17, fontWeight:800, color:T.text, lineHeight:'22px' }}>Magenta XL</p>
+                <p style={{ fontSize:13, color:'rgba(0,0,0,0.55)', marginTop:1, marginBottom:14 }}>+49 111 111 1111</p>
+                <DataBar pct={0.58} />
               </div>
-              <div style={{ background: T.white + '60', borderRadius: 8, padding: '4px 10px' }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: '#005' }}>€49.95/mo</p>
+              {/* Placeholder phone visual */}
+              <div style={{
+                width:56, height:88, marginLeft:12, flexShrink:0,
+                background:'rgba(255,255,255,0.45)', borderRadius:10,
+                border:'1.5px solid rgba(255,255,255,0.7)',
+                display:'flex', alignItems:'center', justifyContent:'center',
+              }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <rect x="5" y="1" width="14" height="22" rx="3" stroke="rgba(0,0,0,0.4)" strokeWidth="1.5"/>
+                  <circle cx="12" cy="19.5" r="1" fill="rgba(0,0,0,0.35)"/>
+                  <rect x="8" y="3.5" width="8" height="1" rx="0.5" fill="rgba(0,0,0,0.25)"/>
+                </svg>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-              <div style={{ background: T.white + '50', borderRadius: 8, padding: '6px 12px', flex: 1 }}>
-                <p style={{ fontSize: 11, color: '#003' }}>Data</p>
-                <p style={{ fontSize: 14, fontWeight: 655 }}>∞ GB</p>
-              </div>
-              <div style={{ background: T.white + '50', borderRadius: 8, padding: '6px 12px', flex: 1 }}>
-                <p style={{ fontSize: 11, color: '#003' }}>Calls</p>
-                <p style={{ fontSize: 14, fontWeight: 655 }}>∞</p>
-              </div>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', marginTop:10 }}>
+              <Ic.Arrow />
             </div>
           </div>
 
-          {/* Inline service notification banner */}
+          {/* Inline notification banner */}
           {!bannerDismissed && (
             <div style={{
-              background: T.white + 'CC', borderTop: '1px solid rgba(0,0,0,0.08)',
-              padding: '10px 14px',
-              display: 'flex', alignItems: 'center', gap: 10,
+              background:'rgba(255,255,255,0.82)',
+              borderTop:'1px solid rgba(0,0,0,0.07)',
+              padding:'11px 14px',
+              display:'flex', alignItems:'flex-start', gap:10,
             }}>
-              <Icon.Warning />
-              <p style={{ fontSize: 13, color: T.text, flex: 1, lineHeight: '16px' }}>
-                Contract updated — <span style={{ color: T.accent, fontWeight: 600 }}>no cost changes</span>
-              </p>
-              <button onClick={() => setBannerDismissed(true)} style={{ color: T.textRecessive, cursor: 'pointer' }}>
-                <Icon.X />
+              <div style={{ flex:1 }}>
+                <p style={{ fontSize:13, color:T.text, lineHeight:'17px', fontWeight:500 }}>
+                  Travelling? Get the roaming package that best fits you ✈️
+                </p>
+              </div>
+              <button onClick={()=>setBannerDismissed(true)} style={{ color:T.textSub, cursor:'pointer', flexShrink:0, marginTop:1 }}>
+                <Ic.X />
               </button>
+            </div>
+          )}
+          {!bannerDismissed && (
+            <div style={{ padding:'0 14px 14px', background:'rgba(255,255,255,0.82)' }}>
+              <Btn label="Browse Roaming" sm />
             </div>
           )}
         </div>
 
-        {/* MagentaZuhause card */}
-        <div style={{
-          background: T.white, borderRadius: 16, padding: 16,
-          border: `1px solid ${T.stroke}30`, marginBottom: 16,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-        }}>
-          <p style={{ fontSize: 12, fontWeight: 600, color: T.textRecessive }}>MagentaZuhause · Internet</p>
-          <p style={{ fontSize: 18, fontWeight: 655, marginTop: 2, marginBottom: 12 }}>Fibre 1000</p>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ background: T.bgSubtle, borderRadius: 8, padding: '6px 12px', flex: 1 }}>
-              <p style={{ fontSize: 11, color: T.textRecessive }}>Download</p>
-              <p style={{ fontSize: 14, fontWeight: 655 }}>1,000 Mbps</p>
+        {/* ── Secondary contract card (white) ── */}
+        <div style={{ background:T.white, borderRadius:16, padding:'16px', marginBottom:12, border:`1px solid ${T.stroke}`, boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+            <div style={{ flex:1 }}>
+              <p style={{ fontSize:17, fontWeight:800, color:T.text, lineHeight:'22px' }}>Magenta L</p>
+              <p style={{ fontSize:13, color:T.textSub, marginTop:1, marginBottom:14 }}>+49 222 222 2222</p>
+              <DataBar pct={0.35} />
             </div>
-            <div style={{ background: T.bgSubtle, borderRadius: 8, padding: '6px 12px', flex: 1 }}>
-              <p style={{ fontSize: 11, color: T.textRecessive }}>Monthly</p>
-              <p style={{ fontSize: 14, fontWeight: 655 }}>€54.95</p>
+            <div style={{
+              width:46, height:46, borderRadius:'50%', marginLeft:12, flexShrink:0,
+              background:'linear-gradient(135deg,#c0392b,#922b21)',
+              overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center',
+            }}>
+              <svg width="46" height="46" viewBox="0 0 46 46">
+                <circle cx="23" cy="23" r="23" fill="#c0392b"/>
+                <circle cx="23" cy="18" r="8" fill="#f1948a"/>
+                <ellipse cx="23" cy="42" rx="14" ry="10" fill="#f1948a"/>
+              </svg>
             </div>
+          </div>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', marginTop:10 }}>
+            <Ic.Arrow />
           </div>
         </div>
 
-        <p style={{ fontSize: 12, color: T.textRecessive, textAlign: 'center' }}>
-          Tap the avatar to open your profile ↑
+        {/* ── Manage bills row ── */}
+        <div style={{ background:T.white, borderRadius:16, padding:'16px', marginBottom:12, border:`1px solid ${T.stroke}`, display:'flex', alignItems:'center', justifyContent:'space-between', cursor:'pointer', boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
+          <span style={{ fontSize:16, fontWeight:600, color:T.text }}>Manage bills</span>
+          <Ic.Arrow />
+        </div>
+
+        {/* Hint */}
+        <p style={{ fontSize:12, color:T.textSub, textAlign:'center', padding:'8px 0' }}>
+          Tap the avatar ↑ to open your profile
         </p>
       </div>
 
@@ -592,159 +592,109 @@ function OverviewScreen({ onAvatarTap, notifCount }) {
   );
 }
 
-/* ─── ODS Bottom Sheet: Profile ──────────────────────────────── */
-function ODSProfileBottomSheet({ onClose, onNotifications, notifCount }) {
+/* ─── Profile Bottom Sheet ────────────────────────────────── */
+function ProfileSheet({ onClose, onNotifs, unread }) {
   return (
     <>
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'absolute', inset: 0,
-          background: 'rgba(0,0,0,0.4)', zIndex: 50,
-        }}
-        className="fade-in"
-      />
-      {/* Sheet */}
+      <div onClick={onClose} className="fade-in" style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.38)', zIndex:50 }}/>
       <div className="slide-up" style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 51,
-        background: T.white, borderRadius: '24px 24px 0 0',
-        overflow: 'hidden',
+        position:'absolute', bottom:0, left:0, right:0, zIndex:51,
+        background:T.white, borderRadius:'24px 24px 0 0', overflow:'hidden',
       }}>
         {/* Handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
-          <div style={{ width: 36, height: 4, background: T.stroke, borderRadius: 999 }}/>
+        <div style={{ display:'flex', justifyContent:'center', padding:'12px 0 6px' }}>
+          <div style={{ width:36, height:4, background:T.stroke, borderRadius:999 }}/>
         </div>
 
-        {/* User info */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 14,
-          padding: '12px 20px 16px',
-          borderBottom: `1px solid ${T.stroke}30`,
-        }}>
-          <ODSAvatar size={52} initials="JM" />
+        {/* User row */}
+        <div style={{ display:'flex', alignItems:'center', gap:14, padding:'10px 20px 16px', borderBottom:`1px solid ${T.stroke}` }}>
+          <div style={{ width:52, height:52, borderRadius:'50%', overflow:'hidden', flexShrink:0 }}>
+            <svg width="52" height="52" viewBox="0 0 52 52">
+              <circle cx="26" cy="26" r="26" fill="#b8895a"/>
+              <circle cx="26" cy="20" r="10" fill="#e8c49a"/>
+              <ellipse cx="26" cy="50" rx="16" ry="12" fill="#e8c49a"/>
+            </svg>
+          </div>
           <div>
-            <p style={{ fontSize: 16, fontWeight: 655, color: T.text }}>Jana Meyer</p>
-            <p style={{ fontSize: 13, color: T.textRecessive }}>Customer #: 4892-1743</p>
+            <p style={{ fontSize:17, fontWeight:700, color:T.text }}>Jana Meyer</p>
+            <p style={{ fontSize:13, color:T.textSub }}>Customer #: 4892-1743</p>
           </div>
         </div>
 
-        {/* Menu items */}
+        {/* Menu */}
         {[
-          {
-            icon: <Icon.Bell size={20} />,
-            label: 'Notifications',
-            badge: notifCount,
-            action: onNotifications,
-            accent: true,
-          },
-          { icon: <Icon.Settings />, label: 'Settings',                   action: onClose },
-          { icon: <Icon.Grid />,    label: 'Manage and connect services', action: onClose },
-          { icon: <Icon.Package />, label: 'Order Management',            action: onClose },
-          { icon: <Icon.LogOut />,  label: 'Log out',                     action: onClose, destructive: true },
-        ].map(({ icon, label, badge, action, accent, destructive }) => (
+          { icon:<Ic.Bell color={T.accent}/>, label:'Notifications', badge:unread, action:onNotifs, bold:true },
+          { icon:<Ic.Settings />,             label:'Settings',                    action:onClose },
+          { icon:<Ic.Grid />,                 label:'Manage and connect services', action:onClose },
+          { icon:<Ic.Package />,              label:'Order Management',            action:onClose },
+          { icon:<Ic.LogOut />,               label:'Log out',                     action:onClose, red:true },
+        ].map(({ icon, label, badge, action, bold, red }) => (
           <button key={label} onClick={action} style={{
-            width: '100%', display: 'flex', alignItems: 'center', gap: 14,
-            padding: '14px 20px',
-            borderBottom: `1px solid ${T.stroke}15`,
-            background: 'none', cursor: 'pointer',
-            color: destructive ? T.destructive : T.text,
+            width:'100%', display:'flex', alignItems:'center', gap:14,
+            padding:'14px 20px', borderBottom:`1px solid ${T.stroke}50`,
+            cursor:'pointer', color: red ? T.destructive : T.text,
           }}>
-            <span style={{ color: destructive ? T.destructive : (accent ? T.accent : T.textRecessive), width: 24 }}>
-              {icon}
-            </span>
-            <span style={{ fontSize: 16, fontWeight: accent ? 655 : 500, flex: 1, textAlign: 'left' }}>
+            <span style={{ width:24, flexShrink:0 }}>{icon}</span>
+            <span style={{ fontSize:16, fontWeight: bold ? 700 : 500, flex:1, textAlign:'left',
+              color: red ? T.destructive : T.text }}>
               {label}
             </span>
-            {badge > 0 && <ODSBadgeNumber count={badge} />}
-            <span style={{ color: T.stroke }}>
-              <Icon.Chevron />
-            </span>
+            {badge > 0 && <Badge n={badge} />}
+            {!red && <Ic.ChevronRight />}
           </button>
         ))}
-
-        {/* Safe area */}
-        <div style={{ height: 34 }} />
+        <div style={{ height:32 }}/>
       </div>
     </>
   );
 }
 
-/* ─── Notification Card ──────────────────────────────────────── */
-function NotificationCard({ notif, onTap, onMarkRead }) {
-  const [pressed, setPressed] = useState(false);
-
-  const isAction = notif.status === 'actionRequired';
-
+/* ─── Notification Card ───────────────────────────────────── */
+function NotifCard({ n, onTap }) {
+  const [press, setPress] = useState(false);
+  const isAction = n.status === 'actionRequired';
   return (
     <div
-      onMouseDown={() => setPressed(true)}
-      onMouseUp={() => setPressed(false)}
-      onTouchStart={() => setPressed(true)}
-      onTouchEnd={() => setPressed(false)}
-      onClick={() => onTap(notif)}
+      onMouseDown={()=>setPress(true)} onMouseUp={()=>setPress(false)}
+      onTouchStart={()=>setPress(true)} onTouchEnd={()=>setPress(false)}
+      onClick={()=>onTap(n)}
       style={{
-        background: pressed ? T.bgSubtle : T.white,
-        borderRadius: 16,
-        border: `1px solid ${T.stroke}25`,
-        marginBottom: 10,
-        overflow: 'hidden',
-        cursor: 'pointer',
-        boxShadow: pressed ? 'none' : '0 1px 6px rgba(0,0,0,0.05)',
-        transition: 'background 0.1s, box-shadow 0.1s',
-        display: 'flex',
+        background: press ? T.bgSubtle : T.white,
+        borderRadius:16, border:`1px solid ${T.stroke}`,
+        marginBottom:10, overflow:'hidden', cursor:'pointer',
+        boxShadow: press ? 'none' : '0 1px 5px rgba(0,0,0,0.05)',
+        transition:'background 0.1s', display:'flex',
       }}>
-      {/* Unread left border */}
-      <div style={{
-        width: 4, flexShrink: 0,
-        background: notif.isRead ? 'transparent' : T.accent,
-        borderRadius: '16px 0 0 16px',
-      }}/>
-
-      <div style={{ flex: 1, padding: '14px 14px 14px 12px' }}>
-        {/* Top row: service chip + date */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <ODSTagStatic label={notif.service} variant="service" size="small" />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {notif.hasDocument && (
-              <span style={{ color: T.textRecessive }}><Icon.Doc /></span>
-            )}
-            <span style={{ fontSize: 12, color: T.textRecessive }}>{notif.date}</span>
+      {/* Unread accent bar */}
+      <div style={{ width:4, flexShrink:0, background: n.isRead ? 'transparent' : T.accent, borderRadius:'16px 0 0 16px' }}/>
+      <div style={{ flex:1, padding:'13px 13px 13px 11px' }}>
+        {/* Service + date */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+          <Chip label={n.service} variant="service" sm />
+          <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+            {n.hasDocument && <span style={{ opacity:0.5 }}><Ic.Doc /></span>}
+            <span style={{ fontSize:12, color:T.textSub }}>{n.date}</span>
           </div>
         </div>
-
         {/* Headline */}
-        <p style={{
-          fontSize: 16, fontWeight: 655, color: T.text,
-          lineHeight: '20px', marginBottom: notif.summary ? 4 : 10,
-        }}>
-          {notif.headline}
+        <p style={{ fontSize:16, fontWeight:700, color:T.text, lineHeight:'20px', marginBottom: n.summary ? 4 : 10 }}>
+          {n.headline}
         </p>
-
         {/* Summary */}
-        {notif.summary && (
-          <p style={{ fontSize: 14, color: T.textRecessive, lineHeight: '17.5px', marginBottom: 10 }}>
-            {notif.summary}
+        {n.summary && (
+          <p style={{ fontSize:14, color:T.textSub, lineHeight:'17.5px', marginBottom:10 }}>
+            {n.summary}
           </p>
         )}
-
-        {/* Bottom row: status chip + CTA */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <ODSTagStatic
-            label={isAction ? 'Action required' : 'No action needed'}
-            variant={isAction ? 'actionRequired' : 'noActionNeeded'}
-            size="small"
-          />
+        {/* Status chip + CTA */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
+          <Chip label={isAction ? 'Action required' : 'No action needed'} variant={isAction ? 'actionRequired' : 'noActionNeeded'} sm />
           {isAction && (
-            <button
-              onClick={e => { e.stopPropagation(); onTap(notif); }}
-              style={{
-                background: T.accent, color: T.white,
-                border: 'none', borderRadius: 999,
-                padding: '6px 16px', fontSize: 13, fontWeight: 655,
-                cursor: 'pointer', minHeight: 32,
-              }}>
-              {notif.type === 'invoice' ? 'View bill' : 'Confirm'}
+            <button onClick={e=>{e.stopPropagation();onTap(n);}} style={{
+              background:T.accent, color:T.white, border:'none', borderRadius:999,
+              padding:'6px 16px', fontSize:13, fontWeight:700, cursor:'pointer', minHeight:32,
+            }}>
+              {n.type==='invoice' ? 'View bill' : 'Confirm'}
             </button>
           )}
         </div>
@@ -753,451 +703,244 @@ function NotificationCard({ notif, onTap, onMarkRead }) {
   );
 }
 
-/* ─── SCREEN 3: Notification Center ─────────────────────────── */
-function NotificationCenterScreen({ onBack, onCardTap, notifications, onMarkRead }) {
-  const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+/* ─── SCREEN 2: Notification Center ──────────────────────── */
+function NotifCenter({ onBack, onCard, notifs }) {
+  const [q, setQ] = useState('');
+  const [filter, setFilter] = useState('all');
   const filters = [
-    { id: 'all',      label: 'All' },
-    { id: 'invoice',  label: 'Invoices' },
-    { id: 'contract', label: 'Contracts' },
-    { id: 'actionRequired', label: 'Action required' },
+    { id:'all', label:'All' },
+    { id:'invoice', label:'Invoices' },
+    { id:'contract', label:'Contracts' },
+    { id:'actionRequired', label:'Action required' },
   ];
-
-  const filtered = notifications.filter(n => {
-    const matchFilter =
-      activeFilter === 'all' ? true :
-      activeFilter === 'actionRequired' ? n.status === 'actionRequired' :
-      n.type === activeFilter;
-    const matchSearch = !search ||
-      n.headline.toLowerCase().includes(search.toLowerCase()) ||
-      n.summary.toLowerCase().includes(search.toLowerCase()) ||
-      n.service.toLowerCase().includes(search.toLowerCase());
-    return matchFilter && matchSearch;
+  const filtered = notifs.filter(n => {
+    const fok = filter==='all' ? true : filter==='actionRequired' ? n.status==='actionRequired' : n.type===filter;
+    const qok = !q || [n.headline,n.summary,n.service].some(s=>s.toLowerCase().includes(q.toLowerCase()));
+    return fok && qok;
   });
-
-  const newItems  = filtered.filter(n => !n.isRead && ['08 Jun', '06 Jun'].includes(n.date));
-  const weekItems = filtered.filter(n => ['05 Jun', '04 Jun'].includes(n.date));
-
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const newItems  = filtered.filter(n => ['08 Jun','06 Jun'].includes(n.date));
+  const weekItems = filtered.filter(n => ['05 Jun','04 Jun'].includes(n.date));
+  const unread = notifs.filter(n=>!n.isRead).length;
 
   return (
-    <div className="slide-right" style={{
-      position: 'absolute', inset: 0, background: T.bg,
-      display: 'flex', flexDirection: 'column', zIndex: 10,
-    }}>
+    <div className="slide-right" style={{ position:'absolute', inset:0, background:T.bg, display:'flex', flexDirection:'column', zIndex:10 }}>
       <StatusBar />
-
-      {/* Page header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 8, padding: '4px 16px 14px',
-        flexShrink: 0,
-      }}>
-        <button onClick={onBack} style={{
-          width: 40, height: 40, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', borderRadius: '50%',
-          background: T.bgSubtle, color: T.text, cursor: 'pointer',
-        }}>
-          <Icon.Back />
+      {/* Header */}
+      <div style={{ display:'flex', alignItems:'center', gap:10, padding:'4px 18px 14px', flexShrink:0 }}>
+        <button onClick={onBack} style={{ width:40, height:40, borderRadius:'50%', background:T.bgSubtle, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <Ic.Back />
         </button>
-        <h1 style={{ fontSize: 24, fontWeight: 655, flex: 1 }}>Notifications</h1>
-        {unreadCount > 0 && (
-          <ODSBadgeNumber count={unreadCount} />
-        )}
+        <h1 style={{ fontSize:24, fontWeight:800, flex:1, letterSpacing:-0.2 }}>Notifications</h1>
+        {unread > 0 && <Badge n={unread} />}
       </div>
 
-      {/* Search bar */}
-      <div style={{ padding: '0 16px 12px', flexShrink: 0 }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          background: T.bgSubtle, borderRadius: 12,
-          padding: '10px 14px',
-          border: `1px solid ${T.stroke}40`,
-        }}>
-          <span style={{ color: T.textRecessive }}><Icon.Search /></span>
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search notifications..."
-            style={{
-              flex: 1, background: 'none', border: 'none', outline: 'none',
-              fontSize: 15, color: T.text,
-            }}
-          />
-          {search && (
-            <button onClick={() => setSearch('')} style={{ color: T.textRecessive, cursor: 'pointer' }}>
-              <Icon.X />
-            </button>
-          )}
+      {/* Search */}
+      <div style={{ padding:'0 16px 12px', flexShrink:0 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10, background:T.bgSubtle, borderRadius:12, padding:'10px 14px', border:`1px solid ${T.stroke}` }}>
+          <Ic.Search />
+          <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search notifications…"
+            style={{ flex:1, background:'none', border:'none', outline:'none', fontSize:15, color:T.text }}/>
+          {q && <button onClick={()=>setQ('')}><Ic.X /></button>}
         </div>
       </div>
 
-      {/* ODS Tabs — filter chips */}
-      <div style={{ flexShrink: 0 }}>
-        <div className="scroll-area" style={{
-          display: 'flex', gap: 8, padding: '0 16px 12px',
-          overflowX: 'auto', flexDirection: 'row',
-        }}>
-          {filters.map(f => (
-            <button
-              key={f.id}
-              onClick={() => setActiveFilter(f.id)}
-              style={{
-                flexShrink: 0, borderRadius: 999,
-                padding: '8px 16px', cursor: 'pointer',
-                fontSize: 14, fontWeight: 655,
-                background: activeFilter === f.id ? T.accent : T.bgSubtle,
-                color: activeFilter === f.id ? T.white : T.textRecessive,
-                border: activeFilter === f.id ? 'none' : `1px solid ${T.stroke}`,
-                minHeight: 36,
-                transition: 'background 0.15s, color 0.15s',
-              }}>
-              {f.label}
-            </button>
-          ))}
-        </div>
+      {/* Filter chips */}
+      <div className="scroll-area" style={{ display:'flex', gap:8, padding:'0 16px 12px', overflowX:'auto', flexShrink:0 }}>
+        {filters.map(f => (
+          <button key={f.id} onClick={()=>setFilter(f.id)} style={{
+            flexShrink:0, borderRadius:999, padding:'8px 18px', cursor:'pointer',
+            fontSize:14, fontWeight:700, minHeight:36,
+            background: filter===f.id ? T.accent : T.bgSubtle,
+            color: filter===f.id ? T.white : T.textSub,
+            border: filter===f.id ? 'none' : `1px solid ${T.stroke}`,
+            transition:'background 0.15s, color 0.15s',
+          }}>{f.label}</button>
+        ))}
       </div>
 
       {/* Feed */}
-      <div className="scroll-area" style={{ flex: 1, padding: '0 16px', paddingBottom: 24 }}>
+      <div className="scroll-area" style={{ flex:1, padding:'0 16px 24px' }}>
         {filtered.length === 0 ? (
-          /* Empty state */
-          <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            justifyContent: 'center', paddingTop: 60, gap: 12,
-          }}>
-            <div style={{
-              width: 72, height: 72, borderRadius: '50%',
-              background: T.bgSubtle, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Icon.Bell size={32} color={T.textRecessive} />
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', paddingTop:60, gap:12 }}>
+            <div style={{ width:72, height:72, borderRadius:'50%', background:T.bgSubtle, display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <Ic.Bell size={32} />
             </div>
-            <p style={{ fontSize: 18, fontWeight: 655, color: T.text }}>You're all caught up</p>
-            <p style={{ fontSize: 14, color: T.textRecessive, textAlign: 'center', maxWidth: 240 }}>
-              No notifications match your current filter.
-            </p>
+            <p style={{ fontSize:18, fontWeight:700 }}>You're all caught up</p>
+            <p style={{ fontSize:14, color:T.textSub, textAlign:'center', maxWidth:240 }}>No notifications match your filter.</p>
           </div>
-        ) : (
-          <>
-            {newItems.length > 0 && (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <p style={{ fontSize: 13, fontWeight: 655, color: T.accent, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    New
-                  </p>
-                  <ODSBadgeNumber count={newItems.length} size="small" />
-                </div>
-                {newItems.map(n => (
-                  <NotificationCard key={n.id} notif={n} onTap={onCardTap} onMarkRead={onMarkRead} />
-                ))}
-              </>
-            )}
-
-            {weekItems.length > 0 && (
-              <>
-                <p style={{
-                  fontSize: 13, fontWeight: 655, color: T.textRecessive,
-                  textTransform: 'uppercase', letterSpacing: 0.5,
-                  margin: `${newItems.length > 0 ? 16 : 0}px 0 10px`,
-                }}>
-                  Last 7 days
-                </p>
-                {weekItems.map(n => (
-                  <NotificationCard key={n.id} notif={n} onTap={onCardTap} onMarkRead={onMarkRead} />
-                ))}
-              </>
-            )}
-          </>
-        )}
+        ) : (<>
+          {newItems.length > 0 && (<>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+              <p style={{ fontSize:12, fontWeight:700, color:T.accent, textTransform:'uppercase', letterSpacing:0.7 }}>New</p>
+              <Badge n={newItems.length} size="sm" />
+            </div>
+            {newItems.map(n => <NotifCard key={n.id} n={n} onTap={onCard} />)}
+          </>)}
+          {weekItems.length > 0 && (<>
+            <p style={{ fontSize:12, fontWeight:700, color:T.textSub, textTransform:'uppercase', letterSpacing:0.7, margin:`${newItems.length?16:0}px 0 10px` }}>
+              Last 7 days
+            </p>
+            {weekItems.map(n => <NotifCard key={n.id} n={n} onTap={onCard} />)}
+          </>)}
+        </>)}
       </div>
     </div>
   );
 }
 
-/* ─── SCREEN 4: Invoice AI Explainer ─────────────────────────── */
-function InvoiceDetailScreen({ notif, onBack }) {
-  const [detailExpanded, setDetailExpanded] = useState(false);
-  const [feedback, setFeedback] = useState(null); // 'up' | 'down' | null
+/* ─── SCREEN 3: Invoice AI Explainer ─────────────────────── */
+function InvoiceDetail({ onBack }) {
+  const [expanded, setExpanded] = useState(false);
+  const [fb, setFb] = useState(null);
 
   return (
-    <div className="slide-right" style={{
-      position: 'absolute', inset: 0, background: T.bg,
-      display: 'flex', flexDirection: 'column', zIndex: 20,
-    }}>
+    <div className="slide-right" style={{ position:'absolute', inset:0, background:T.bg, display:'flex', flexDirection:'column', zIndex:20 }}>
       <StatusBar />
-
-      {/* Header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        padding: '4px 16px 14px', flexShrink: 0,
-      }}>
-        <button onClick={onBack} style={{
-          width: 40, height: 40, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', borderRadius: '50%', background: T.bgSubtle,
-          color: T.text, cursor: 'pointer',
-        }}>
-          <Icon.Back />
+      <div style={{ display:'flex', alignItems:'center', gap:10, padding:'4px 18px 14px', flexShrink:0 }}>
+        <button onClick={onBack} style={{ width:40, height:40, borderRadius:'50%', background:T.bgSubtle, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <Ic.Back />
         </button>
-        <h1 style={{ fontSize: 20, fontWeight: 655, flex: 1, lineHeight: '24px' }}>
-          Internet Bill — June 2026
-        </h1>
+        <h1 style={{ fontSize:19, fontWeight:800, flex:1, lineHeight:'24px', letterSpacing:-0.2 }}>Internet Bill — June 2026</h1>
       </div>
 
-      <div className="scroll-area" style={{ flex: 1, padding: '0 16px', paddingBottom: 32 }}>
-        {/* Service chip */}
-        <div style={{ marginBottom: 16 }}>
-          <ODSTagStatic label="MagentaZuhause · Internet" variant="service" />
+      <div className="scroll-area" style={{ flex:1, padding:'0 16px 32px' }}>
+        <div style={{ marginBottom:14 }}>
+          <Chip label="MagentaZuhause · Internet" variant="service" />
         </div>
 
-        {/* AI Explanation block */}
-        <div style={{
-          background: T.white, borderRadius: 16, overflow: 'hidden',
-          border: `1px solid ${T.stroke}25`,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-          marginBottom: 16,
-        }}>
+        {/* AI block */}
+        <div style={{ background:T.white, borderRadius:16, overflow:'hidden', border:`1px solid ${T.stroke}`, boxShadow:'0 2px 10px rgba(0,0,0,0.05)', marginBottom:14 }}>
           {/* AI header */}
-          <div style={{
-            background: `linear-gradient(135deg, ${T.accent}10, ${T.accent}05)`,
-            padding: '16px 16px 12px',
-            borderBottom: `1px solid ${T.stroke}20`,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: '50%', background: T.accent,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: T.white, fontSize: 13, fontWeight: 700,
-              }}>AI</div>
-              <span style={{ fontSize: 12, fontWeight: 600, color: T.textRecessive }}>
-                Magenta AI Explanation
-              </span>
+          <div style={{ background:`linear-gradient(135deg,${T.accent}12,${T.accent}05)`, padding:'16px 16px 12px', borderBottom:`1px solid ${T.stroke}` }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+              <div style={{ width:28, height:28, borderRadius:'50%', background:T.accent, display:'flex', alignItems:'center', justifyContent:'center', color:T.white, fontSize:12, fontWeight:800 }}>AI</div>
+              <span style={{ fontSize:12, fontWeight:600, color:T.textSub }}>Magenta AI Explanation</span>
             </div>
-            <h2 style={{ fontSize: 20, fontWeight: 655, lineHeight: '24px', color: T.text }}>
-              Your bill went up €4.20 this month
-            </h2>
+            <h2 style={{ fontSize:20, fontWeight:800, lineHeight:'25px', color:T.text }}>Your bill went up €4.20 this month</h2>
           </div>
 
-          <div style={{ padding: 16 }}>
-            <p style={{ fontSize: 15, color: T.textRecessive, lineHeight: '20px', marginBottom: 16 }}>
+          <div style={{ padding:16 }}>
+            <p style={{ fontSize:15, color:T.textSub, lineHeight:'21px', marginBottom:14 }}>
               Your 6-month promotional discount ended on 1 June. This is the regular rate for your Fibre 1000 plan.
             </p>
 
-            {/* Anomaly note */}
-            <div style={{
-              background: T.success + '10', borderRadius: 10,
-              padding: '10px 12px', marginBottom: 16,
-              border: `1px solid ${T.success}30`,
-              display: 'flex', alignItems: 'center', gap: 8,
-            }}>
-              <span style={{
-                width: 20, height: 20, borderRadius: '50%', background: T.success,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <Icon.Check />
-              </span>
-              <p style={{ fontSize: 13, color: T.success, fontWeight: 600 }}>
-                This increase is expected — no action needed
-              </p>
+            {/* Anomaly chip */}
+            <div style={{ background:T.success+'12', border:`1px solid ${T.success}40`, borderRadius:10, padding:'10px 12px', marginBottom:14, display:'flex', alignItems:'center', gap:8 }}>
+              <div style={{ width:20, height:20, borderRadius:'50%', background:T.success, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <Ic.Check />
+              </div>
+              <p style={{ fontSize:13, color:T.success, fontWeight:700 }}>This increase is expected — no action needed</p>
             </div>
 
-            {/* What changed — collapsible */}
-            <button
-              onClick={() => setDetailExpanded(!detailExpanded)}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '10px 0', borderTop: `1px solid ${T.stroke}20`,
-                borderBottom: detailExpanded ? 'none' : `1px solid ${T.stroke}20`,
-                cursor: 'pointer', background: 'none', marginBottom: detailExpanded ? 0 : 0,
-              }}>
-              <span style={{ fontSize: 14, fontWeight: 655, color: T.text }}>
-                What changed vs. last month
-              </span>
-              <span style={{ color: T.textRecessive, transform: detailExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}>
-                <Icon.Chevron />
+            {/* Collapsible detail */}
+            <button onClick={()=>setExpanded(!expanded)} style={{
+              width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between',
+              padding:'10px 0', borderTop:`1px solid ${T.stroke}`,
+              borderBottom: expanded ? 'none' : `1px solid ${T.stroke}`,
+              cursor:'pointer', background:'none',
+            }}>
+              <span style={{ fontSize:14, fontWeight:700, color:T.text }}>What changed vs. last month</span>
+              <span style={{ transform: expanded?'rotate(180deg)':'none', transition:'transform 0.2s' }}>
+                <Ic.ChevronDown />
               </span>
             </button>
 
-            {detailExpanded && (
-              <div className="fade-in" style={{ borderBottom: `1px solid ${T.stroke}20`, paddingBottom: 12, marginBottom: 12 }}>
-                {/* Cost breakdown table */}
+            {expanded && (
+              <div className="fade-in" style={{ borderBottom:`1px solid ${T.stroke}`, paddingBottom:12, marginBottom:0 }}>
                 {[
-                  { item: 'Fibre 1000 base rate',   was: '€54.95', now: '€54.95', delta: null },
-                  { item: '6-month promo discount', was: '−€4.20', now: '€0.00',  delta: '+€4.20' },
-                  { item: 'Router rental',           was: '€4.00',  now: '€4.00',  delta: null },
-                ].map(row => (
-                  <div key={row.item} style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '8px 0', borderBottom: `1px solid ${T.stroke}15`,
-                  }}>
-                    <span style={{ fontSize: 13, color: T.text, flex: 1 }}>{row.item}</span>
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, color: T.textRecessive, textDecoration: row.delta ? 'line-through' : 'none' }}>
-                        {row.was}
-                      </span>
-                      <span style={{ fontSize: 13, fontWeight: 655, color: row.delta ? T.warning : T.text, minWidth: 52, textAlign: 'right' }}>
-                        {row.now}
-                      </span>
-                      {row.delta && (
-                        <ODSTagStatic label={row.delta} variant="noActionNeeded" size="small" />
-                      )}
+                  { item:'Fibre 1000 base rate',   was:'€54.95', now:'€54.95', delta:null },
+                  { item:'6-month promo discount',  was:'−€4.20', now:'€0.00',  delta:'+€4.20' },
+                  { item:'Router rental',           was:'€4.00',  now:'€4.00',  delta:null },
+                ].map(r => (
+                  <div key={r.item} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'9px 0', borderBottom:`1px solid ${T.stroke}50` }}>
+                    <span style={{ fontSize:13, color:T.text, flex:1 }}>{r.item}</span>
+                    <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+                      <span style={{ fontSize:12, color:T.textSub, textDecoration:r.delta?'line-through':'none' }}>{r.was}</span>
+                      <span style={{ fontSize:13, fontWeight:700, color:r.delta?T.warning:T.text, minWidth:48, textAlign:'right' }}>{r.now}</span>
+                      {r.delta && <Chip label={r.delta} variant="noActionNeeded" sm />}
                     </div>
                   </div>
                 ))}
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between',
-                  padding: '10px 0', fontWeight: 655,
-                }}>
-                  <span style={{ fontSize: 14 }}>Total this month</span>
-                  <span style={{ fontSize: 16, color: T.accent }}>€58.95</span>
+                <div style={{ display:'flex', justifyContent:'space-between', padding:'10px 0', fontWeight:700 }}>
+                  <span style={{ fontSize:14 }}>Total this month</span>
+                  <span style={{ fontSize:16, color:T.accent }}>€58.95</span>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Primary CTA */}
-        <ODSButton label="View full PDF" variant="primary" fullWidth />
+        <Btn label="View full PDF" full />
 
         {/* Was this helpful? */}
-        <div style={{
-          background: T.white, borderRadius: 16, padding: '16px',
-          margin: '12px 0',
-          border: `1px solid ${T.stroke}25`,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
-        }}>
-          <p style={{ fontSize: 14, fontWeight: 655, color: T.text }}>Was this explanation helpful?</p>
-          <div style={{ display: 'flex', gap: 24 }}>
-            <button
-              onClick={() => setFeedback('up')}
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                cursor: 'pointer', background: 'none', border: 'none',
-                opacity: feedback === 'down' ? 0.4 : 1,
+        <div style={{ background:T.white, borderRadius:16, padding:16, margin:'12px 0', border:`1px solid ${T.stroke}`, display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
+          <p style={{ fontSize:14, fontWeight:700 }}>Was this explanation helpful?</p>
+          <div style={{ display:'flex', gap:28 }}>
+            {[
+              { type:'up',   Icon:Ic.ThumbUp,   label:'Helpful',     col:T.success },
+              { type:'down', Icon:Ic.ThumbDown, label:'Not helpful', col:T.destructive },
+            ].map(({ type, Icon, label, col }) => (
+              <button key={type} onClick={()=>setFb(type)} style={{
+                display:'flex', flexDirection:'column', alignItems:'center', gap:5,
+                cursor:'pointer', opacity: fb && fb!==type ? 0.35 : 1, transition:'opacity 0.2s',
               }}>
-              <Icon.ThumbUp filled={feedback === 'up'} />
-              <span style={{ fontSize: 11, color: feedback === 'up' ? T.success : T.textRecessive }}>
-                Helpful
-              </span>
-            </button>
-            <button
-              onClick={() => setFeedback('down')}
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                cursor: 'pointer', background: 'none', border: 'none',
-                opacity: feedback === 'up' ? 0.4 : 1,
-              }}>
-              <Icon.ThumbDown filled={feedback === 'down'} />
-              <span style={{ fontSize: 11, color: feedback === 'down' ? T.destructive : T.textRecessive }}>
-                Not helpful
-              </span>
-            </button>
+                <Icon filled={fb===type} />
+                <span style={{ fontSize:11, color: fb===type ? col : T.textSub, fontWeight:600 }}>{label}</span>
+              </button>
+            ))}
           </div>
-          {feedback && (
-            <p className="fade-in" style={{
-              fontSize: 12, color: T.success, fontWeight: 600,
-              background: T.success + '10', padding: '6px 14px', borderRadius: 999,
-            }}>
-              {feedback === 'up' ? 'Thanks for the feedback! 👍' : 'Thanks — we\'ll improve this.'}
+          {fb && (
+            <p className="fade-in" style={{ fontSize:12, color:T.success, fontWeight:700, background:T.success+'12', padding:'6px 16px', borderRadius:999 }}>
+              {fb==='up' ? 'Thanks for the feedback! 👍' : 'Thanks — we\'ll improve this.'}
             </p>
           )}
         </div>
 
-        {/* Secondary CTA */}
-        <ODSButton label="Get help" variant="secondary" fullWidth />
+        <div style={{ marginTop:4 }}>
+          <Btn label="Get help" variant="secondary" full />
+        </div>
       </div>
     </div>
   );
 }
 
-/* ─── ODS Toast ──────────────────────────────────────────────── */
-function ODSToast({ message, visible }) {
-  if (!visible) return null;
-  return (
-    <div className="fade-in" style={{
-      position: 'absolute', bottom: 100, left: '50%', transform: 'translateX(-50%)',
-      background: '#1a1a2e', color: T.white, padding: '10px 20px',
-      borderRadius: 999, fontSize: 14, fontWeight: 500,
-      zIndex: 100, whiteSpace: 'nowrap',
-      boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-    }}>
-      {message}
-    </div>
-  );
-}
-
-/* ─── Root App ───────────────────────────────────────────────── */
+/* ─── Root App ────────────────────────────────────────────── */
 function App() {
-  const [screen, setScreen]           = useState('overview');   // 'overview' | 'center' | 'detail'
-  const [showProfile, setShowProfile] = useState(false);
-  const [notifications, setNotifications] = useState(NOTIFICATIONS_DATA);
-  const [selectedNotif, setSelectedNotif] = useState(null);
-  const [toast, setToast]             = useState({ visible: false, message: '' });
+  const [screen, setScreen]     = useState('overview');
+  const [sheet, setSheet]       = useState(false);
+  const [notifs, setNotifs]     = useState(NOTIFS);
+  const [selected, setSelected] = useState(null);
+  const unread = notifs.filter(n=>!n.isRead).length;
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
-  const showToast = (msg) => {
-    setToast({ visible: true, message: msg });
-    setTimeout(() => setToast({ visible: false, message: '' }), 2200);
-  };
-
-  const handleCardTap = (notif) => {
-    setSelectedNotif(notif);
-    // Mark as read
-    setNotifications(prev =>
-      prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n)
-    );
+  const openCard = (n) => {
+    setNotifs(prev => prev.map(x => x.id===n.id ? {...x, isRead:true} : x));
+    setSelected(n);
     setScreen('detail');
   };
 
-  const handleMarkRead = (id) => {
-    setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, isRead: true } : n)
-    );
-    showToast('Marked as read');
-  };
-
   return (
-    <div style={{ width: 390, height: 844, position: 'relative', background: T.bg, overflow: 'hidden', borderRadius: 48 }}>
+    <div style={{ width:390, height:844, position:'relative', background:T.bg, overflow:'hidden', borderRadius:'inherit' }}>
+      <OverviewScreen onAvatar={()=>setSheet(true)} unread={unread} />
 
-      {/* Overview always rendered underneath */}
-      <OverviewScreen
-        onAvatarTap={() => setShowProfile(true)}
-        notifCount={unreadCount}
-      />
-
-      {/* Notification Center */}
-      {(screen === 'center' || screen === 'detail') && (
-        <NotificationCenterScreen
-          key="center"
-          onBack={() => { setScreen('overview'); setShowProfile(false); }}
-          onCardTap={handleCardTap}
-          notifications={notifications}
-          onMarkRead={handleMarkRead}
+      {(screen==='center'||screen==='detail') && (
+        <NotifCenter
+          onBack={()=>setScreen('overview')}
+          onCard={openCard}
+          notifs={notifs}
         />
       )}
 
-      {/* Invoice Detail */}
-      {screen === 'detail' && selectedNotif && (
-        <InvoiceDetailScreen
-          notif={selectedNotif}
-          onBack={() => setScreen('center')}
-        />
+      {screen==='detail' && selected && (
+        <InvoiceDetail onBack={()=>setScreen('center')} />
       )}
 
-      {/* Profile Bottom Sheet */}
-      {showProfile && screen === 'overview' && (
-        <ODSProfileBottomSheet
-          onClose={() => setShowProfile(false)}
-          onNotifications={() => {
-            setShowProfile(false);
-            setScreen('center');
-          }}
-          notifCount={unreadCount}
+      {sheet && screen==='overview' && (
+        <ProfileSheet
+          onClose={()=>setSheet(false)}
+          onNotifs={()=>{ setSheet(false); setScreen('center'); }}
+          unread={unread}
         />
       )}
-
-      {/* Toast */}
-      <ODSToast message={toast.message} visible={toast.visible} />
     </div>
   );
 }

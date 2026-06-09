@@ -824,20 +824,33 @@ function InvoiceDetail({ onBack }) {
   const [fb, setFb] = useState(null);
 
   return (
-    <div className="slide-right" style={{ position:'absolute', inset:0, background:T.bg, display:'flex', flexDirection:'column', zIndex:20 }}>
-      <StatusBar />
-      {/* ODS Subpage Header */}
-      <div style={{ display:'flex', alignItems:'center', padding:'12px 13.5px', flexShrink:0, background:T.white }}>
-        <div style={{ flex:1, display:'flex', alignItems:'center' }}>
-          <button onClick={onBack} style={{ padding:6, cursor:'pointer', display:'flex', alignItems:'center', borderRadius:999 }}>
-            <Ic.Back />
-          </button>
-        </div>
-        <h1 style={{ fontSize:18, fontWeight:655, color:T.text, fontVariationSettings:'"wdth" 100', lineHeight:'23px', textAlign:'center' }}>Internet Bill — June 2026</h1>
-        <div style={{ flex:1 }} />
-      </div>
+    <>
+      {/* Dimmed overlay */}
+      <div onClick={onBack} className="fade-in" style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.4)', zIndex:20 }} />
 
-      <div className="scroll-area" style={{ flex:1, padding:'0 16px 32px' }}>
+      {/* Bottom sheet */}
+      <div className="slide-up" style={{
+        position:'absolute', bottom:0, left:0, right:0, zIndex:21,
+        background:T.bg, borderRadius:'24px 24px 0 0',
+        maxHeight:'92%', display:'flex', flexDirection:'column', overflow:'hidden',
+      }}>
+        {/* Handle + header */}
+        <div style={{ background:T.white, borderRadius:'24px 24px 0 0', flexShrink:0 }}>
+          <div style={{ display:'flex', justifyContent:'center', padding:'12px 0 6px' }}>
+            <div style={{ width:36, height:4, background:T.stroke, borderRadius:999 }} />
+          </div>
+          <div style={{ display:'flex', alignItems:'center', padding:'4px 13.5px 12px' }}>
+            <div style={{ flex:1, display:'flex', alignItems:'center' }}>
+              <button onClick={onBack} style={{ padding:6, cursor:'pointer', display:'flex', alignItems:'center', borderRadius:999 }}>
+                <Ic.Back />
+              </button>
+            </div>
+            <h1 style={{ fontSize:18, fontWeight:655, color:T.text, fontVariationSettings:'"wdth" 100', lineHeight:'23px', textAlign:'center' }}>Internet Bill — June 2026</h1>
+            <div style={{ flex:1 }} />
+          </div>
+        </div>
+
+      <div className="scroll-area" style={{ flex:1, padding:'0 16px 32px', overflowY:'auto' }}>
         <div style={{ marginBottom:14 }}>
           <Chip label="MagentaZuhause · Internet" variant="service" />
         </div>
@@ -934,7 +947,8 @@ function InvoiceDetail({ onBack }) {
           <Btn label="Get help" variant="secondary" full />
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

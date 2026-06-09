@@ -126,22 +126,18 @@ const T = {
 
 /* ─── Mock Notifications ──────────────────────────────────── */
 const NOTIFS = [
-  { id:'1', type:'invoice',  headline:'Your internet bill went up €4.20',
-    summary:'Your 6-month discount ended on 1 June.',
-    service:'MagentaZuhause · Internet', date:'08 Jun',
-    status:'actionRequired', isRead:false, hasDocument:true },
-  { id:'2', type:'contract', headline:'Your mobile contract was updated.',
-    summary:'No changes to your costs.',
-    service:'Magenta XL · Mobile', date:'06 Jun',
-    status:'noActionNeeded', isRead:true, hasDocument:true },
-  { id:'3', type:'order',    headline:'Your fibre order is confirmed.',
-    summary:'Installation scheduled for 15 Jun.',
-    service:'MagentaZuhause · Internet', date:'05 Jun',
-    status:'noActionNeeded', isRead:false, hasDocument:false },
-  { id:'4', type:'account',  headline:'Confirm your new bank details by 15 Jun.',
-    summary:'',
-    service:'Account', date:'04 Jun',
-    status:'actionRequired', isRead:false, hasDocument:false },
+  { id:'1', type:'invoice',  headline:'Your bill went up 4,20 € this month',
+    summary:'This increase is expected, no action needed.',
+    service:'Magenta Zuhause Internet', date:'today, 13:16',
+    isNew:true, cta:'See all details', ctaVariant:'primary' },
+  { id:'2', type:'account',  headline:'Change banking details by end of month',
+    summary:'This increase is expected, no action needed.',
+    service:'Account', date:'4.6.26',
+    isNew:false, cta:null },
+  { id:'3', type:'mobile',   headline:'Extra data volume applied',
+    summary:'This increase is expected, no action needed.',
+    service:'Mobile', date:'27.5.26',
+    isNew:false, cta:'Explain me how', ctaVariant:'secondary' },
 ];
 
 /* ─── SVG Icons (ODS-matched) ─────────────────────────────── */
@@ -315,10 +311,9 @@ function TLogo() {
 /* ─── ODS Bottom Navigation ───────────────────────────────── */
 function ODSBottomNav({ active='overview' }) {
   const tabs = [
-    { id:'overview', label:'Overview',   Icon:Ic.Home    },
+    { id:'overview', label:'Home',       Icon:Ic.Home    },
     { id:'moments',  label:'Moments',    Icon:Ic.Heart   },
     { id:'ai',       label:'Magenta AI', Icon:Ic.AI      },
-    { id:'support',  label:'Support',    Icon:Ic.Support },
   ];
   return (
     <div style={{
@@ -670,216 +665,154 @@ function ProfileSheet({ onClose, onNotifs, unread }) {
   );
 }
 
-/* ─── Notification Card ───────────────────────────────────── */
-function NotifCard({ n, onTap, onMarkRead }) {
-  const [press, setPress]       = useState(false);
-  const [swipeX, setSwipeX]     = useState(0);
-  const [touchStart, setTouchStart] = useState(null);
-  const isAction  = n.status === 'actionRequired';
-  const isRead    = n.isRead;
-
-  // Semantic accent bar: magenta=urgent action, teal=positive, transparent=read/calm
-  const barColor = isRead ? 'transparent'
-    : isAction ? T.accent
-    : ['order'].includes(n.type) ? T.teal
-    : T.stroke;
-
-  // Swipe-left to reveal "Mark read"
-  const handleTouchStart = e => setTouchStart(e.touches[0].clientX);
-  const handleTouchMove  = e => {
-    if (touchStart === null) return;
-    const dx = e.touches[0].clientX - touchStart;
-    if (dx < 0) setSwipeX(Math.max(dx, -80));
-  };
-  const handleTouchEnd = () => {
-    if (swipeX < -40) { /* reveal stays open */ }
-    else setSwipeX(0);
-    setTouchStart(null);
-  };
-
+/* ─── ODS Tag Static ──────────────────────────────────────── */
+function TagStatic({ label, accent }) {
   return (
-    <div style={{ position:'relative', marginBottom:10, borderRadius:16, overflow:'hidden' }}>
-      {/* Swipe-left action revealed underneath */}
-      <div style={{
-        position:'absolute', right:0, top:0, bottom:0, width:80,
-        background: isRead ? T.bgSubtle : T.accent,
-        display:'flex', alignItems:'center', justifyContent:'center',
-        borderRadius:'0 16px 16px 0',
-      }}>
-        <button onClick={e=>{e.stopPropagation(); onMarkRead(n); setSwipeX(0);}}
-          style={{ color: isRead ? T.textSub : T.white, fontSize:11, fontWeight:700, background:'none', border:'none', cursor:'pointer', textAlign:'center', lineHeight:'14px' }}>
-          {isRead ? 'Mark\nunread' : 'Mark\nread'}
-        </button>
-      </div>
+    <div style={{
+      display:'inline-flex', alignItems:'center',
+      height:20, padding:'0 8px', borderRadius:6,
+      background: accent ? T.accent : '#616161', flexShrink:0,
+    }}>
+      <span style={{ fontSize:12, fontWeight:655, color:T.white, fontVariationSettings:'"wdth" 100', whiteSpace:'nowrap', lineHeight:'15.6px' }}>
+        {label}
+      </span>
+    </div>
+  );
+}
 
-      {/* Card — slides left on swipe */}
-      <div
-        onMouseDown={()=>setPress(true)} onMouseUp={()=>setPress(false)}
-        onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
-        onClick={()=>{ if (swipeX < -10) { setSwipeX(0); return; } onTap(n); }}
-        style={{
-          background: isRead ? '#FAFAFA' : T.white,
-          border:`1px solid ${T.stroke}`,
-          overflow:'hidden', cursor:'pointer', display:'flex',
-          transform:`translateX(${swipeX}px)`,
-          transition: touchStart ? 'none' : 'transform 0.2s ease',
-          boxShadow: press ? 'none' : '0 1px 5px rgba(0,0,0,0.05)',
-          opacity: isRead ? 0.85 : 1,
-          borderRadius:16,
-        }}>
-        {/* Semantic accent bar */}
-        <div style={{ width:4, flexShrink:0, background:barColor, borderRadius:'16px 0 0 16px' }}/>
-
-        <div style={{ flex:1, padding:'13px 13px 13px 11px' }}>
-          {/* Service + date + unread dot */}
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-              {!isRead && <div style={{ width:7, height:7, borderRadius:'50%', background:T.accent, flexShrink:0 }}/>}
-              <Chip label={n.service} variant="service" sm />
-            </div>
-            <div style={{ display:'flex', alignItems:'center', gap:5 }}>
-              {n.hasDocument && <span style={{ opacity:0.5 }}><Ic.Doc /></span>}
-              <span style={{ fontSize:12, color:T.textSub }}>{n.date}</span>
-            </div>
-          </div>
-
-          {/* Headline — bolder when unread */}
-          <p style={{
-            fontSize:16, lineHeight:'20px', fontVariationSettings:'"wdth" 100',
-            fontWeight: isRead ? 500 : 655,
-            color: isRead ? T.textSub : T.text,
-            marginBottom: n.summary ? 4 : (isAction ? 10 : 0),
-          }}>
-            {n.headline}
-          </p>
-
-          {/* Summary */}
-          {n.summary && (
-            <p style={{ fontSize:14, color:T.textSub, lineHeight:'17.5px', marginBottom: isAction ? 10 : 0, fontVariationSettings:'"wdth" 100' }}>
-              {n.summary}
-            </p>
-          )}
-
-          {/* Only show chip + CTA for action-required */}
-          {isAction && (
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8, marginTop:10 }}>
-              <Chip label="Action required" variant="actionRequired" sm />
-              <button onClick={e=>{e.stopPropagation();onTap(n);}} style={{
-                background:T.accent, color:T.white, border:'none', borderRadius:999,
-                padding:'6px 16px', fontSize:13, fontWeight:700, cursor:'pointer', minHeight:32,
-              }}>
-                {n.type==='invoice' ? 'View bill' : 'Confirm'}
-              </button>
-            </div>
-          )}
+/* ─── Notification Card (ODS: OA Critical Notification Single) */
+function NotifCard({ n, onTap }) {
+  const isPrimary = n.ctaVariant === 'primary';
+  return (
+    <div onClick={()=>onTap && onTap(n)} style={{
+      background: T.bgSubtle, borderRadius:16,
+      padding:16, marginBottom:16, cursor: onTap ? 'pointer' : 'default',
+    }}>
+      {/* Meta row: tags left, date right */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+        <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+          {n.isNew && <TagStatic label="NEW" accent />}
+          <TagStatic label={n.service} accent={false} />
         </div>
+        <span style={{ fontSize:14, fontWeight:500, color:T.text, fontVariationSettings:'"wdth" 100', whiteSpace:'nowrap' }}>
+          {n.date}
+        </span>
       </div>
+      {/* Text */}
+      <p style={{ fontSize:16, fontWeight:655, color:T.text, lineHeight:'20px', fontVariationSettings:'"wdth" 100', marginBottom:4 }}>
+        {n.headline}
+      </p>
+      <p style={{ fontSize:14, fontWeight:500, color:T.text, lineHeight:'17.5px', fontVariationSettings:'"wdth" 100' }}>
+        {n.summary}
+      </p>
+      {/* CTA */}
+      {n.cta && (
+        <div style={{ display:'flex', justifyContent:'flex-end', marginTop:16 }}>
+          <button onClick={e=>{e.stopPropagation(); onTap && onTap(n);}} style={{
+            borderRadius:999, padding:'8px 20px', fontSize:14, fontWeight:655,
+            fontVariationSettings:'"wdth" 100', cursor:'pointer',
+            background: isPrimary ? T.accent : T.dark,
+            color: T.white, border:'none',
+            display:'flex', alignItems:'center', gap:6,
+          }}>
+            {!isPrimary && <span style={{ fontSize:16 }}>✦</span>}
+            {n.cta}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
 /* ─── SCREEN 2: Notification Center ──────────────────────── */
-function NotifCenter({ onBack, onCard, notifs, onMarkAllRead, onMarkRead }) {
+function NotifCenter({ onBack, onCard, notifs }) {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState('all');
   const filters = [
     { id:'all', label:'All' },
     { id:'invoice', label:'Invoices' },
     { id:'contract', label:'Contracts' },
-    { id:'actionRequired', label:'Action required' },
   ];
   const filtered = notifs.filter(n => {
-    const fok = filter==='all' ? true : filter==='actionRequired' ? n.status==='actionRequired' : n.type===filter;
-    const qok = !q || [n.headline,n.summary,n.service].some(s=>s.toLowerCase().includes(q.toLowerCase()));
+    const fok = filter==='all' || n.type===filter;
+    const qok = !q || [n.headline, n.summary, n.service].some(s=>s.toLowerCase().includes(q.toLowerCase()));
     return fok && qok;
   });
-  // Group by read state — not by date
-  const unreadItems = filtered.filter(n => !n.isRead);
-  const readItems   = filtered.filter(n =>  n.isRead);
-  const unread = notifs.filter(n=>!n.isRead).length;
-
-  const SectionLabel = ({ label, count, accent }) => (
-    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
-      <p style={{ fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:0.7,
-        color: accent ? T.accent : T.textSub }}>{label}</p>
-      {count > 0 && <Badge n={count} size="sm" />}
-    </div>
-  );
+  const unread = notifs.length; // all shown as unread in this design
 
   return (
-    <div className="slide-right" style={{ position:'absolute', inset:0, background:T.bg, display:'flex', flexDirection:'column', zIndex:10 }}>
+    <div className="slide-right" style={{ position:'absolute', inset:0, background:T.white, display:'flex', flexDirection:'column', zIndex:10 }}>
       <StatusBar />
+
       {/* ODS Subpage Header */}
-      <div style={{ display:'flex', alignItems:'center', padding:'12px 13.5px', flexShrink:0, background:T.white }}>
+      <div style={{ display:'flex', alignItems:'center', padding:'12px 8px', flexShrink:0, background:T.white }}>
         <div style={{ flex:1, display:'flex', alignItems:'center' }}>
           <button onClick={onBack} style={{ padding:6, cursor:'pointer', display:'flex', alignItems:'center', borderRadius:999 }}>
             <Ic.Back />
           </button>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <h1 style={{ fontSize:18, fontWeight:655, color:T.text, fontVariationSettings:'"wdth" 100', lineHeight:'23px' }}>Notifications</h1>
-          {unread > 0 && <Badge n={unread} />}
+          <h1 style={{ fontSize:20, fontWeight:655, color:T.text, fontVariationSettings:'"wdth" 100', lineHeight:'24px' }}>Notifications</h1>
+          <Badge n={unread} />
         </div>
-        <div style={{ flex:1, display:'flex', justifyContent:'flex-end' }}>
-          {unread > 0 && (
-            <button onClick={onMarkAllRead} style={{ padding:'6px 4px', cursor:'pointer', fontSize:12, fontWeight:600, color:T.accent, background:'none', border:'none' }}>
-              Mark all read
+        <div style={{ flex:1 }} />
+      </div>
+
+      {/* Search — ODS Input Field style: magenta border, icon in circle right */}
+      <div style={{ padding:'0 10px 16px', flexShrink:0 }}>
+        <div style={{
+          display:'flex', alignItems:'center', justifyContent:'space-between',
+          height:60, borderRadius:30, padding:'14px 16px 14px 24px',
+          border:`2px solid ${T.accent}`,
+        }}>
+          <input value={q} onChange={e=>setQ(e.target.value)}
+            placeholder="What are you looking for?"
+            style={{ flex:1, background:'none', border:'none', outline:'none',
+              fontSize:16, fontWeight:655, color: q ? T.text : T.textSub,
+              fontVariationSettings:'"wdth" 100' }}/>
+          <div style={{
+            width:32, height:32, borderRadius:25, background:T.bgSubtle,
+            display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+          }}>
+            <Ic.Search />
+          </div>
+        </div>
+      </div>
+
+      {/* Filter chips — ODS Toggle Chip */}
+      <div style={{ display:'flex', gap:8, padding:'0 10px 16px', flexShrink:0 }}>
+        {filters.map(f => {
+          const active = filter === f.id;
+          return (
+            <button key={f.id} onClick={()=>setFilter(f.id)} style={{
+              flexShrink:0, borderRadius:999, padding:'8px 16px', cursor:'pointer',
+              fontSize:14, fontWeight:655, fontVariationSettings:'"wdth" 100',
+              background: active ? T.dark : T.white,
+              color: active ? T.white : T.text,
+              border: `1px solid ${active ? T.dark : T.stroke}`,
+              display:'flex', alignItems:'center', gap:6,
+              transition:'background 0.15s',
+            }}>
+              {f.label}
+              {active && <span style={{ fontSize:10, opacity:0.7 }}>▾</span>}
             </button>
-          )}
-        </div>
-      </div>
-
-      {/* Search */}
-      <div style={{ padding:'10px 16px 0', flexShrink:0 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:10, background:T.bgSubtle, borderRadius:12, padding:'10px 14px', border:`1px solid ${T.stroke}` }}>
-          <Ic.Search />
-          <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search notifications…"
-            style={{ flex:1, background:'none', border:'none', outline:'none', fontSize:15, color:T.text }}/>
-          {q && <button onClick={()=>setQ('')}><Ic.X /></button>}
-        </div>
-      </div>
-
-      {/* Filter chips */}
-      <div className="scroll-area" style={{ display:'flex', gap:8, padding:'10px 16px', overflowX:'auto', flexShrink:0 }}>
-        {filters.map(f => (
-          <button key={f.id} onClick={()=>setFilter(f.id)} style={{
-            flexShrink:0, borderRadius:999, padding:'8px 18px', cursor:'pointer',
-            fontSize:14, fontWeight:700, minHeight:36,
-            background: filter===f.id ? T.accent : T.bgSubtle,
-            color: filter===f.id ? T.white : T.textSub,
-            border: filter===f.id ? 'none' : `1px solid ${T.stroke}`,
-            transition:'background 0.15s, color 0.15s',
-          }}>{f.label}</button>
-        ))}
+          );
+        })}
       </div>
 
       {/* Feed */}
-      <div className="scroll-area" style={{ flex:1, padding:'0 16px 24px' }}>
+      <div className="scroll-area" style={{ flex:1, padding:'0 10px 80px' }}>
         {filtered.length === 0 ? (
           <div style={{ display:'flex', flexDirection:'column', alignItems:'center', paddingTop:60, gap:12 }}>
             <div style={{ width:72, height:72, borderRadius:'50%', background:T.bgSubtle, display:'flex', alignItems:'center', justifyContent:'center' }}>
               <Ic.Bell size={32} />
             </div>
-            {q || filter !== 'all' ? (<>
-              <p style={{ fontSize:18, fontWeight:700, color:T.text }}>No matching notifications</p>
-              <p style={{ fontSize:14, color:T.textSub, textAlign:'center', maxWidth:240 }}>Try another filter or search term.</p>
-            </>) : (<>
-              <p style={{ fontSize:18, fontWeight:700, color:T.text }}>You're all caught up</p>
-              <p style={{ fontSize:14, color:T.textSub, textAlign:'center', maxWidth:240 }}>No notifications to show right now.</p>
-            </>)}
+            <p style={{ fontSize:18, fontWeight:655, color:T.text }}>No matching notifications</p>
+            <p style={{ fontSize:14, color:T.textSub, textAlign:'center', maxWidth:240 }}>Try another filter or search term.</p>
           </div>
-        ) : (<>
-          {unreadItems.length > 0 && (<>
-            <SectionLabel label="Unread" count={unreadItems.length} accent />
-            {unreadItems.map(n => <NotifCard key={n.id} n={n} onTap={onCard} onMarkRead={onMarkRead} />)}
-          </>)}
-          {readItems.length > 0 && (<>
-            <div style={{ marginTop: unreadItems.length ? 16 : 0 }}>
-              <SectionLabel label="Earlier" count={0} accent={false} />
-            </div>
-            {readItems.map(n => <NotifCard key={n.id} n={n} onTap={onCard} onMarkRead={onMarkRead} />)}
-          </>)}
-        </>)}
+        ) : (
+          filtered.map(n => <NotifCard key={n.id} n={n} onTap={n.cta ? onCard : null} />)
+        )}
       </div>
     </div>
   );
@@ -1028,8 +961,6 @@ function App() {
           onBack={()=>setScreen('overview')}
           onCard={openCard}
           notifs={notifs}
-          onMarkAllRead={()=>setNotifs(prev=>prev.map(n=>({...n, isRead:true})))}
-          onMarkRead={n=>setNotifs(prev=>prev.map(x=>x.id===n.id ? {...x, isRead:!x.isRead} : x))}
         />
       )}
 

@@ -671,52 +671,106 @@ function ProfileSheet({ onClose, onNotifs, unread }) {
 }
 
 /* ─── Notification Card ───────────────────────────────────── */
-function NotifCard({ n, onTap }) {
-  const [press, setPress] = useState(false);
-  const isAction = n.status === 'actionRequired';
+function NotifCard({ n, onTap, onMarkRead }) {
+  const [press, setPress]       = useState(false);
+  const [swipeX, setSwipeX]     = useState(0);
+  const [touchStart, setTouchStart] = useState(null);
+  const isAction  = n.status === 'actionRequired';
+  const isRead    = n.isRead;
+
+  // Semantic accent bar: magenta=urgent action, teal=positive, transparent=read/calm
+  const barColor = isRead ? 'transparent'
+    : isAction ? T.accent
+    : ['order'].includes(n.type) ? T.teal
+    : T.stroke;
+
+  // Swipe-left to reveal "Mark read"
+  const handleTouchStart = e => setTouchStart(e.touches[0].clientX);
+  const handleTouchMove  = e => {
+    if (touchStart === null) return;
+    const dx = e.touches[0].clientX - touchStart;
+    if (dx < 0) setSwipeX(Math.max(dx, -80));
+  };
+  const handleTouchEnd = () => {
+    if (swipeX < -40) { /* reveal stays open */ }
+    else setSwipeX(0);
+    setTouchStart(null);
+  };
+
   return (
-    <div
-      onMouseDown={()=>setPress(true)} onMouseUp={()=>setPress(false)}
-      onTouchStart={()=>setPress(true)} onTouchEnd={()=>setPress(false)}
-      onClick={()=>onTap(n)}
-      style={{
-        background: press ? T.bgSubtle : T.white,
-        borderRadius:16, border:`1px solid ${T.stroke}`,
-        marginBottom:10, overflow:'hidden', cursor:'pointer',
-        boxShadow: press ? 'none' : '0 1px 5px rgba(0,0,0,0.05)',
-        transition:'background 0.1s', display:'flex',
+    <div style={{ position:'relative', marginBottom:10, borderRadius:16, overflow:'hidden' }}>
+      {/* Swipe-left action revealed underneath */}
+      <div style={{
+        position:'absolute', right:0, top:0, bottom:0, width:80,
+        background: isRead ? T.bgSubtle : T.accent,
+        display:'flex', alignItems:'center', justifyContent:'center',
+        borderRadius:'0 16px 16px 0',
       }}>
-      {/* Unread accent bar */}
-      <div style={{ width:4, flexShrink:0, background: n.isRead ? 'transparent' : T.accent, borderRadius:'16px 0 0 16px' }}/>
-      <div style={{ flex:1, padding:'13px 13px 13px 11px' }}>
-        {/* Service + date */}
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-          <Chip label={n.service} variant="service" sm />
-          <div style={{ display:'flex', alignItems:'center', gap:5 }}>
-            {n.hasDocument && <span style={{ opacity:0.5 }}><Ic.Doc /></span>}
-            <span style={{ fontSize:12, color:T.textSub }}>{n.date}</span>
+        <button onClick={e=>{e.stopPropagation(); onMarkRead(n); setSwipeX(0);}}
+          style={{ color: isRead ? T.textSub : T.white, fontSize:11, fontWeight:700, background:'none', border:'none', cursor:'pointer', textAlign:'center', lineHeight:'14px' }}>
+          {isRead ? 'Mark\nunread' : 'Mark\nread'}
+        </button>
+      </div>
+
+      {/* Card — slides left on swipe */}
+      <div
+        onMouseDown={()=>setPress(true)} onMouseUp={()=>setPress(false)}
+        onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
+        onClick={()=>{ if (swipeX < -10) { setSwipeX(0); return; } onTap(n); }}
+        style={{
+          background: isRead ? '#FAFAFA' : T.white,
+          border:`1px solid ${T.stroke}`,
+          overflow:'hidden', cursor:'pointer', display:'flex',
+          transform:`translateX(${swipeX}px)`,
+          transition: touchStart ? 'none' : 'transform 0.2s ease',
+          boxShadow: press ? 'none' : '0 1px 5px rgba(0,0,0,0.05)',
+          opacity: isRead ? 0.85 : 1,
+          borderRadius:16,
+        }}>
+        {/* Semantic accent bar */}
+        <div style={{ width:4, flexShrink:0, background:barColor, borderRadius:'16px 0 0 16px' }}/>
+
+        <div style={{ flex:1, padding:'13px 13px 13px 11px' }}>
+          {/* Service + date + unread dot */}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+              {!isRead && <div style={{ width:7, height:7, borderRadius:'50%', background:T.accent, flexShrink:0 }}/>}
+              <Chip label={n.service} variant="service" sm />
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+              {n.hasDocument && <span style={{ opacity:0.5 }}><Ic.Doc /></span>}
+              <span style={{ fontSize:12, color:T.textSub }}>{n.date}</span>
+            </div>
           </div>
-        </div>
-        {/* Headline */}
-        <p style={{ fontSize:16, fontWeight:655, color:T.text, lineHeight:'20px', marginBottom: n.summary ? 4 : 10, fontVariationSettings:'"wdth" 100' }}>
-          {n.headline}
-        </p>
-        {/* Summary */}
-        {n.summary && (
-          <p style={{ fontSize:14, color:T.textSub, lineHeight:'17.5px', marginBottom:10, fontVariationSettings:'"wdth" 100' }}>
-            {n.summary}
+
+          {/* Headline — bolder when unread */}
+          <p style={{
+            fontSize:16, lineHeight:'20px', fontVariationSettings:'"wdth" 100',
+            fontWeight: isRead ? 500 : 655,
+            color: isRead ? T.textSub : T.text,
+            marginBottom: n.summary ? 4 : (isAction ? 10 : 0),
+          }}>
+            {n.headline}
           </p>
-        )}
-        {/* Status chip + CTA */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
-          <Chip label={isAction ? 'Action required' : 'No action needed'} variant={isAction ? 'actionRequired' : 'noActionNeeded'} sm />
+
+          {/* Summary */}
+          {n.summary && (
+            <p style={{ fontSize:14, color:T.textSub, lineHeight:'17.5px', marginBottom: isAction ? 10 : 0, fontVariationSettings:'"wdth" 100' }}>
+              {n.summary}
+            </p>
+          )}
+
+          {/* Only show chip + CTA for action-required */}
           {isAction && (
-            <button onClick={e=>{e.stopPropagation();onTap(n);}} style={{
-              background:T.accent, color:T.white, border:'none', borderRadius:999,
-              padding:'6px 16px', fontSize:13, fontWeight:700, cursor:'pointer', minHeight:32,
-            }}>
-              {n.type==='invoice' ? 'View bill' : 'Confirm'}
-            </button>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8, marginTop:10 }}>
+              <Chip label="Action required" variant="actionRequired" sm />
+              <button onClick={e=>{e.stopPropagation();onTap(n);}} style={{
+                background:T.accent, color:T.white, border:'none', borderRadius:999,
+                padding:'6px 16px', fontSize:13, fontWeight:700, cursor:'pointer', minHeight:32,
+              }}>
+                {n.type==='invoice' ? 'View bill' : 'Confirm'}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -725,7 +779,7 @@ function NotifCard({ n, onTap }) {
 }
 
 /* ─── SCREEN 2: Notification Center ──────────────────────── */
-function NotifCenter({ onBack, onCard, notifs, onMarkAllRead }) {
+function NotifCenter({ onBack, onCard, notifs, onMarkAllRead, onMarkRead }) {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState('all');
   const filters = [
@@ -739,14 +793,23 @@ function NotifCenter({ onBack, onCard, notifs, onMarkAllRead }) {
     const qok = !q || [n.headline,n.summary,n.service].some(s=>s.toLowerCase().includes(q.toLowerCase()));
     return fok && qok;
   });
-  const newItems  = filtered.filter(n => ['08 Jun','06 Jun'].includes(n.date));
-  const weekItems = filtered.filter(n => ['05 Jun','04 Jun'].includes(n.date));
+  // Group by read state — not by date
+  const unreadItems = filtered.filter(n => !n.isRead);
+  const readItems   = filtered.filter(n =>  n.isRead);
   const unread = notifs.filter(n=>!n.isRead).length;
+
+  const SectionLabel = ({ label, count, accent }) => (
+    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+      <p style={{ fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:0.7,
+        color: accent ? T.accent : T.textSub }}>{label}</p>
+      {count > 0 && <Badge n={count} size="sm" />}
+    </div>
+  );
 
   return (
     <div className="slide-right" style={{ position:'absolute', inset:0, background:T.bg, display:'flex', flexDirection:'column', zIndex:10 }}>
       <StatusBar />
-      {/* ODS Subpage Header: [flex-1 left] [title center] [flex-1 right] */}
+      {/* ODS Subpage Header */}
       <div style={{ display:'flex', alignItems:'center', padding:'12px 13.5px', flexShrink:0, background:T.white }}>
         <div style={{ flex:1, display:'flex', alignItems:'center' }}>
           <button onClick={onBack} style={{ padding:6, cursor:'pointer', display:'flex', alignItems:'center', borderRadius:999 }}>
@@ -754,7 +817,7 @@ function NotifCenter({ onBack, onCard, notifs, onMarkAllRead }) {
           </button>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <h1 style={{ fontSize:18, fontWeight:655, color:T.text, letterSpacing:0, fontVariationSettings:'"wdth" 100', lineHeight:'23px', textAlign:'center' }}>Notifications</h1>
+          <h1 style={{ fontSize:18, fontWeight:655, color:T.text, fontVariationSettings:'"wdth" 100', lineHeight:'23px' }}>Notifications</h1>
           {unread > 0 && <Badge n={unread} />}
         </div>
         <div style={{ flex:1, display:'flex', justifyContent:'flex-end' }}>
@@ -767,7 +830,7 @@ function NotifCenter({ onBack, onCard, notifs, onMarkAllRead }) {
       </div>
 
       {/* Search */}
-      <div style={{ padding:'0 16px 12px', flexShrink:0 }}>
+      <div style={{ padding:'10px 16px 0', flexShrink:0 }}>
         <div style={{ display:'flex', alignItems:'center', gap:10, background:T.bgSubtle, borderRadius:12, padding:'10px 14px', border:`1px solid ${T.stroke}` }}>
           <Ic.Search />
           <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search notifications…"
@@ -777,7 +840,7 @@ function NotifCenter({ onBack, onCard, notifs, onMarkAllRead }) {
       </div>
 
       {/* Filter chips */}
-      <div className="scroll-area" style={{ display:'flex', gap:8, padding:'0 16px 12px', overflowX:'auto', flexShrink:0 }}>
+      <div className="scroll-area" style={{ display:'flex', gap:8, padding:'10px 16px', overflowX:'auto', flexShrink:0 }}>
         {filters.map(f => (
           <button key={f.id} onClick={()=>setFilter(f.id)} style={{
             flexShrink:0, borderRadius:999, padding:'8px 18px', cursor:'pointer',
@@ -797,22 +860,24 @@ function NotifCenter({ onBack, onCard, notifs, onMarkAllRead }) {
             <div style={{ width:72, height:72, borderRadius:'50%', background:T.bgSubtle, display:'flex', alignItems:'center', justifyContent:'center' }}>
               <Ic.Bell size={32} />
             </div>
-            <p style={{ fontSize:18, fontWeight:700 }}>You're all caught up</p>
-            <p style={{ fontSize:14, color:T.textSub, textAlign:'center', maxWidth:240 }}>No notifications match your filter.</p>
+            {q || filter !== 'all' ? (<>
+              <p style={{ fontSize:18, fontWeight:700, color:T.text }}>No matching notifications</p>
+              <p style={{ fontSize:14, color:T.textSub, textAlign:'center', maxWidth:240 }}>Try another filter or search term.</p>
+            </>) : (<>
+              <p style={{ fontSize:18, fontWeight:700, color:T.text }}>You're all caught up</p>
+              <p style={{ fontSize:14, color:T.textSub, textAlign:'center', maxWidth:240 }}>No notifications to show right now.</p>
+            </>)}
           </div>
         ) : (<>
-          {newItems.length > 0 && (<>
-            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
-              <p style={{ fontSize:12, fontWeight:700, color:T.accent, textTransform:'uppercase', letterSpacing:0.7 }}>New</p>
-              <Badge n={newItems.length} size="sm" />
-            </div>
-            {newItems.map(n => <NotifCard key={n.id} n={n} onTap={onCard} />)}
+          {unreadItems.length > 0 && (<>
+            <SectionLabel label="Unread" count={unreadItems.length} accent />
+            {unreadItems.map(n => <NotifCard key={n.id} n={n} onTap={onCard} onMarkRead={onMarkRead} />)}
           </>)}
-          {weekItems.length > 0 && (<>
-            <p style={{ fontSize:12, fontWeight:700, color:T.textSub, textTransform:'uppercase', letterSpacing:0.7, margin:`${newItems.length?16:0}px 0 10px` }}>
-              Last 7 days
-            </p>
-            {weekItems.map(n => <NotifCard key={n.id} n={n} onTap={onCard} />)}
+          {readItems.length > 0 && (<>
+            <div style={{ marginTop: unreadItems.length ? 16 : 0 }}>
+              <SectionLabel label="Earlier" count={0} accent={false} />
+            </div>
+            {readItems.map(n => <NotifCard key={n.id} n={n} onTap={onCard} onMarkRead={onMarkRead} />)}
           </>)}
         </>)}
       </div>
@@ -964,6 +1029,7 @@ function App() {
           onCard={openCard}
           notifs={notifs}
           onMarkAllRead={()=>setNotifs(prev=>prev.map(n=>({...n, isRead:true})))}
+          onMarkRead={n=>setNotifs(prev=>prev.map(x=>x.id===n.id ? {...x, isRead:!x.isRead} : x))}
         />
       )}
 

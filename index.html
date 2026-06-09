@@ -2,8 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=390, initial-scale=1.0, maximum-scale=1.0" />
-  <title>MeinMagenta OneApp — Notification Center</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>MeinMagenta</title>
+
+  <!-- PWA / iOS Home Screen -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="MeinMagenta" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#E20074" />
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- iOS Touch Icon (generated inline as SVG→PNG via canvas would need server; use solid magenta) -->
+  <link rel="apple-touch-icon" href="/icon.png" />
+  <link rel="icon" href="/icon.png" />
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -27,6 +39,29 @@
       background: #FCFDFE;
       border-radius: 48px;
       box-shadow: 0 40px 80px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.1);
+    }
+
+    /* ── On a real iPhone (standalone PWA or narrow viewport) ── */
+    @media (max-width: 430px) {
+      body {
+        background: #FCFDFE;
+        display: block;
+        min-height: 100dvh;
+        padding: 0;
+      }
+      #root {
+        width: 100%;
+        height: 100dvh;
+        border-radius: 0;
+        box-shadow: none;
+      }
+    }
+
+    /* Safe area insets for notch / Dynamic Island / home indicator */
+    @supports (padding-top: env(safe-area-inset-top)) {
+      @media (max-width: 430px) {
+        #root { padding-top: env(safe-area-inset-top); }
+      }
     }
 
     /* Scrollable areas */

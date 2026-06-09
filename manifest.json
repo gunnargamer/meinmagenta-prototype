@@ -1,0 +1,24 @@
+{
+  "name": "MeinMagenta OneApp",
+  "short_name": "MeinMagenta",
+  "description": "Notification Center Prototype",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#E20074",
+  "theme_color": "#E20074",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

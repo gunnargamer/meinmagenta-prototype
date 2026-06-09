@@ -434,47 +434,50 @@ function OverviewScreen({ onAvatar, unread }) {
     <div style={{ height:'100%', background:T.bg, display:'flex', flexDirection:'column' }}>
       <StatusBar />
 
-      {/* ── Top bar ── */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'2px 20px 10px' }}>
-        <TLogo />
+      {/* ── ODS Main Page Header ── spacing/component/7=24px gap between sections ── */}
+      <div style={{ display:'flex', flexDirection:'column', gap:24, paddingTop:24, paddingBottom:8 }}>
 
-        {/* Right: Magenta-1 tier chip + avatar */}
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+        {/* Header row: Logo | Icons */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', paddingTop:16, paddingBottom:8, paddingLeft:16, paddingRight:16 }}>
+          <TLogo />
 
-          {/* Magenta 1 tier badge — clean pill, no floating dot */}
-          <div style={{
-            height:36, borderRadius:999, background:T.accent,
-            display:'flex', alignItems:'center', justifyContent:'center',
-            padding:'0 12px', gap:1,
-          }}>
-            <span style={{ color:T.white, fontSize:14, fontWeight:800, letterSpacing:-0.3, fontFamily:'TeleNeoWeb,sans-serif' }}>M</span>
-            <span style={{ color:T.white, fontSize:11, fontWeight:700, opacity:0.85, marginTop:1 }}>1</span>
-          </div>
+          {/* Icons List Container: M1 + avatar */}
+          <div style={{ display:'flex', alignItems:'center', gap:16 }}>
 
-          {/* Avatar with notification badge */}
-          <button onClick={onAvatar} style={{ position:'relative', cursor:'pointer', background:'none', padding:0 }}>
+            {/* ODS M1 badge */}
             <div style={{
-              width:38, height:38, borderRadius:'50%',
-              background:'#7C3AED', border:`2px solid ${T.white}`,
-              boxShadow:'0 1px 6px rgba(0,0,0,0.18)',
-              display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+              height:36, borderRadius:999, background:T.accent,
+              display:'flex', alignItems:'center', justifyContent:'center',
+              padding:'0 12px', gap:1,
             }}>
-              <span style={{ color:T.white, fontSize:14, fontWeight:700, letterSpacing:0.5 }}>JM</span>
+              <span style={{ color:T.white, fontSize:14, fontWeight:800, letterSpacing:-0.3 }}>M</span>
+              <span style={{ color:T.white, fontSize:11, fontWeight:700, opacity:0.85, marginTop:1 }}>1</span>
             </div>
-            <div style={{ position:'absolute', top:-4, right:-4 }}>
-              <Badge n={unread} />
-            </div>
-          </button>
-        </div>
-      </div>
 
-      {/* ── Welcome + sub-tabs ── */}
-      <div style={{ padding:'0 20px 4px' }}>
-        <p style={{ fontSize:14, fontWeight:500, color:T.text, lineHeight:'18px', fontVariationSettings:'"wdth" 100' }}>Welcome back,</p>
-        <h1 style={{ fontSize:28, fontWeight:800, color:T.text, lineHeight:'34px', letterSpacing:-0.2, fontVariationSettings:'"wdth" 100' }}>Jana Meyer</h1>
+            {/* Avatar with notification badge */}
+            <button onClick={onAvatar} style={{ position:'relative', cursor:'pointer', background:'none', padding:0 }}>
+              <div style={{
+                width:36, height:36, borderRadius:'50%',
+                background:'#7C3AED',
+                display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+              }}>
+                <span style={{ color:T.white, fontSize:13, fontWeight:700, letterSpacing:0.5 }}>JM</span>
+              </div>
+              <div style={{ position:'absolute', top:-4, right:-4 }}>
+                <Badge n={unread} />
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Title: ODS Subtitle + Title M */}
+        <div style={{ display:'flex', flexDirection:'column', gap:8, paddingLeft:16, paddingRight:16 }}>
+          <p style={{ fontSize:22, fontWeight:655, color:T.text, lineHeight:'22px', fontVariationSettings:'"wdth" 100' }}>Welcome back,</p>
+          <p style={{ fontSize:28, fontWeight:655, color:T.text, lineHeight:'28px', fontVariationSettings:'"wdth" 100' }}>Jana Meyer</p>
+        </div>
 
         {/* ODS sub-tabs: Mobile · Home · TV */}
-        <div style={{ display:'flex', gap:0, marginTop:10, borderBottom:`1px solid ${T.stroke}` }}>
+        <div style={{ display:'flex', gap:0, paddingLeft:16, paddingRight:16, borderBottom:`1px solid ${T.stroke}` }}>
           {['Mobile','Home','TV'].map(tab => (
             <button key={tab} onClick={()=>setActiveTab(tab)} style={{
               padding:'6px 16px 8px',

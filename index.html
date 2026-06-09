@@ -424,7 +424,7 @@ function DataBar({ pct=0.72, used='4.2', total='20' }) {
 }
 
 /* ─── SCREEN 1: Overview ──────────────────────────────────── */
-function OverviewScreen({ onAvatar, unread }) {
+function OverviewScreen({ onAvatar, unread, onViewBills }) {
   const [critDismissed, setCritDismissed] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [activeTab, setActiveTab] = useState('Mobile');
@@ -514,7 +514,7 @@ function OverviewScreen({ onAvatar, unread }) {
               </div>
               <p style={{ fontSize:17, fontWeight:700, lineHeight:'22px', marginBottom:3, fontVariationSettings:'"wdth" 100' }}>Your bills are ready</p>
               <p style={{ fontSize:13, color:'#999', lineHeight:'17px', marginBottom:14, fontVariationSettings:'"wdth" 100' }}>2 invoices awaiting payment · Due 15 Jun</p>
-              <Btn label="View bills" sm />
+              <Btn label="View bills" sm onClick={onViewBills} />
             </div>
           </div>
         )}
@@ -956,7 +956,7 @@ function App() {
 
   return (
     <div style={{ width:390, height:844, position:'relative', background:T.bg, overflow:'hidden', borderRadius:'inherit' }}>
-      <OverviewScreen onAvatar={()=>setSheet(true)} unread={unread} />
+      <OverviewScreen onAvatar={()=>setSheet(true)} unread={unread} onViewBills={()=>setScreen('center')} />
 
       {(screen==='center'||screen==='detail') && (
         <NotifCenter

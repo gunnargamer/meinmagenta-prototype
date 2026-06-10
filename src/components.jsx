@@ -146,16 +146,21 @@ export function TagStatic({ label, accent }) {
 
 /* ─── Notification Card (ODS: OA Critical Notification Single) */
 export function NotifCard({ n, onTap }) {
-  const isPrimary = n.ctaVariant === 'primary';
+  const isRead = !!n.isRead;
+  const ctaBtnVariant = (n.isNew && !isRead)
+    ? (n.ctaVariant === 'primary' ? 'primary' : 'secondary')
+    : 'outline';
   return (
     <div onClick={()=>onTap && onTap(n)} style={{
       background: T.bgSubtle, borderRadius:16,
       padding:16, marginBottom:16, cursor: onTap ? 'pointer' : 'default',
+      opacity: isRead ? 0.55 : 1,
+      transition: 'opacity 0.2s',
     }}>
       {/* Meta row: tags left, date right */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
         <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-          {n.isNew && <TagStatic label="NEW" accent />}
+          {n.isNew && !isRead && <TagStatic label="NEW" accent />}
           <TagStatic label={n.service} accent={false} />
         </div>
         <span style={{ fontSize:14, fontWeight:500, color:T.text, fontVariationSettings:'"wdth" 100', whiteSpace:'nowrap' }}>
@@ -169,15 +174,22 @@ export function NotifCard({ n, onTap }) {
       <p style={{ fontSize:14, fontWeight:500, color:T.text, lineHeight:'17.5px', fontVariationSettings:'"wdth" 100' }}>
         {n.summary}
       </p>
-      {/* CTA */}
+      {/* CTA — kompakter Custom-Button (ODS small ist zu groß für Karten) */}
       {n.cta && (
-        <div style={{ display:'flex', justifyContent:'flex-end', marginTop:16 }}>
-          <ODSButton
-            label={n.cta}
-            variant={isPrimary ? 'primary' : 'secondary'}
-            size="small"
+        <div style={{ display:'flex', justifyContent:'flex-end', marginTop:14 }}>
+          <button
             onClick={e=>{ e.stopPropagation(); onTap && onTap(n); }}
-          />
+            style={{
+              height:32, padding:'0 14px', borderRadius:999, cursor:'pointer',
+              fontSize:13, fontWeight:655, fontVariationSettings:'"wdth" 100',
+              whiteSpace:'nowrap', lineHeight:'32px',
+              ...(ctaBtnVariant === 'primary'
+                ? { background:T.accent,       color:T.white, border:'none' }
+                : ctaBtnVariant === 'secondary'
+                ? { background:T.accent+'15',  color:T.accent, border:`1px solid ${T.accent}40` }
+                : { background:'transparent',  color:T.text,   border:`1px solid ${T.stroke}` }),
+            }}
+          >{n.cta}</button>
         </div>
       )}
     </div>

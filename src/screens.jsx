@@ -159,10 +159,12 @@ export function NotifCenter({ onBack, onCard, notifs }) {
   ];
   const filtered = notifs.filter(n => {
     const fok = filter==='all' || n.type===filter;
-    const qok = !q || [n.headline, n.summary, n.service].some(s=>s.toLowerCase().includes(q.toLowerCase()));
+    const term = q.toLowerCase();
+    const qok = !q || [n.headline, n.summary, n.service, n.date, n.cta, n.type, n.contractId]
+      .filter(Boolean).some(s => s.toLowerCase().includes(term));
     return fok && qok;
   });
-  const unread = notifs.length; // all shown as unread in this design
+  const unread = notifs.filter(n => !n.isRead).length;
 
   return (
     <div className="slide-right" style={{ position:'absolute', inset:0, background:T.white, display:'flex', flexDirection:'column', zIndex:10 }}>
@@ -235,7 +237,7 @@ export function NotifCenter({ onBack, onCard, notifs }) {
             <p style={{ fontSize:14, color:T.textSub, textAlign:'center', maxWidth:240 }}>Anderen Filter oder Suchbegriff verwenden.</p>
           </div>
         ) : (
-          filtered.map(n => <NotifCard key={n.id} n={n} onTap={n.cta ? onCard : null} />)
+          filtered.map(n => <NotifCard key={n.id} n={n} onTap={onCard} />)
         )}
       </div>
     </div>
@@ -371,6 +373,173 @@ export function InvoiceDetail({ onBack }) {
           <Btn label="Hilfe anfordern" variant="secondary" full />
         </div>
       </div>
+      </div>
+    </>
+  );
+}
+
+/* ─── SCREEN 4: NotifDetail — datengesteuerte Detail-Ansicht ── */
+export function NotifDetail({ detail, onBack }) {
+  const [expanded, setExpanded] = useState(true);
+  const [fb, setFb] = useState(null); // null | 'up' | 'down'
+
+  if (!detail) return null;
+
+  const { aiExplanation: ai, accordion: acc } = detail;
+
+  /* confirmVariant → Farbe + Icon */
+  const chipStyles = {
+    success: { bg: '#00784512', border: '#00784540', icon: '✓', iconBg: '#007845' },
+    warning: { bg: '#D0550012', border: '#D0550040', icon: '⚠', iconBg: '#D05500' },
+    info:    { bg: '#0064B412', border: '#0064B440', icon: 'ℹ', iconBg: '#0064B4' },
+  };
+  const cs = chipStyles[ai.confirmVariant] || chipStyles.info;
+
+  /* Zeige 'previous'-Spalte nur wenn mind. eine Zeile einen Wert hat */
+  const showPrev = acc.content.some(r => r.previous !== null);
+
+  /* delta-Farbe */
+  const deltaColor = (d) => {
+    if (!d) return T.textSub;
+    if (d.startsWith('+'))         return T.red;
+    if (d.startsWith('−') || d.startsWith('-')) return T.success;
+    if (d === 'Keine Änderung')    return T.textSub;
+    return T.textSub;
+  };
+
+  return (
+    <>
+      {/* Dimmed overlay */}
+      <div onClick={onBack} className="fade-in" style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.4)', zIndex:20 }} />
+
+      {/* Bottom sheet */}
+      <div className="slide-up" style={{
+        position:'absolute', bottom:0, left:0, right:0, zIndex:21,
+        background:T.bg, borderRadius:'24px 24px 0 0',
+        maxHeight:'92%', display:'flex', flexDirection:'column', overflow:'hidden',
+      }}>
+        {/* Handle + header */}
+        <div style={{ background:T.white, borderRadius:'24px 24px 0 0', flexShrink:0 }}>
+          <div style={{ display:'flex', justifyContent:'center', padding:'12px 0 6px' }}>
+            <div style={{ width:36, height:4, background:T.stroke, borderRadius:999 }} />
+          </div>
+          <div style={{ display:'flex', alignItems:'center', padding:'4px 13.5px 12px' }}>
+            <div style={{ flex:1 }}>
+              <button onClick={onBack} style={{ padding:6, cursor:'pointer', display:'flex', alignItems:'center', borderRadius:999 }}>
+                <Ic.Back />
+              </button>
+            </div>
+            <h1 style={{ fontSize:18, fontWeight:655, color:T.text, fontVariationSettings:'"wdth" 100', lineHeight:'23px', textAlign:'center', flex:2 }}>
+              {detail.title}
+            </h1>
+            <div style={{ flex:1 }} />
+          </div>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="scroll-area" style={{ flex:1, padding:'0 16px 40px', overflowY:'auto' }}>
+
+          {/* Service chip */}
+          <div style={{ marginBottom:14 }}>
+            <Chip label={detail.serviceChip} variant="service" />
+          </div>
+
+          {/* AI block */}
+          <div style={{ background:T.white, borderRadius:16, overflow:'hidden', border:`1px solid ${T.stroke}`, boxShadow:'0 2px 10px rgba(0,0,0,0.05)', marginBottom:14 }}>
+            <div style={{ background:`linear-gradient(135deg,${T.accent}12,${T.accent}05)`, padding:'16px 16px 12px', borderBottom:`1px solid ${T.stroke}` }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+                <div style={{ width:28, height:28, borderRadius:'50%', background:T.accent, display:'flex', alignItems:'center', justifyContent:'center', color:T.white, fontSize:12, fontWeight:800 }}>AI</div>
+                <span style={{ fontSize:12, fontWeight:600, color:T.textSub }}>Magenta AI Erklärung</span>
+              </div>
+              <h2 style={{ fontSize:20, fontWeight:800, lineHeight:'25px', color:T.text, fontVariationSettings:'"wdth" 100' }}>{ai.headline}</h2>
+            </div>
+            <div style={{ padding:16 }}>
+              <p style={{ fontSize:15, color:T.textSub, lineHeight:'21px', marginBottom:14 }}>{ai.body}</p>
+              {/* Confirm chip */}
+              <div style={{ background:cs.bg, border:`1px solid ${cs.border}`, borderRadius:10, padding:'10px 12px', display:'flex', alignItems:'flex-start', gap:8 }}>
+                <div style={{ width:20, height:20, borderRadius:'50%', background:cs.iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, color:T.white, fontSize:11, fontWeight:700, marginTop:1 }}>
+                  {cs.icon}
+                </div>
+                <span style={{ fontSize:13, color:T.text, lineHeight:'18px' }}>{ai.confirmChip}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Accordion */}
+          <div style={{ background:T.white, borderRadius:16, border:`1px solid ${T.stroke}`, marginBottom:14, overflow:'hidden' }}>
+            <button onClick={() => setExpanded(e => !e)} style={{
+              width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between',
+              padding:'14px 16px', cursor:'pointer', background:'none',
+            }}>
+              <span style={{ fontSize:15, fontWeight:655, color:T.text, fontVariationSettings:'"wdth" 100' }}>{acc.label}</span>
+              <span style={{ fontSize:18, color:T.textSub, transform: expanded ? 'rotate(180deg)' : 'none', transition:'transform 0.2s' }}>›</span>
+            </button>
+            {expanded && (
+              <div style={{ borderTop:`1px solid ${T.stroke}` }}>
+                {acc.content.map((row, i) => (
+                  <div key={i} style={{
+                    display:'grid',
+                    gridTemplateColumns: showPrev ? '1fr 1fr 1fr 72px' : '1fr 1fr 72px',
+                    gap:8, padding:'10px 16px',
+                    borderBottom: i < acc.content.length - 1 ? `1px solid ${T.stroke}50` : 'none',
+                    alignItems:'center',
+                  }}>
+                    <span style={{ fontSize:13, color:T.textSub }}>{row.label}</span>
+                    {showPrev && <span style={{ fontSize:13, color:T.textSub, textAlign:'right' }}>{row.previous ?? '—'}</span>}
+                    <span style={{ fontSize:13, fontWeight:600, color:T.text, textAlign:'right' }}>{row.current}</span>
+                    <span style={{ fontSize:12, fontWeight:600, color: deltaColor(row.delta), textAlign:'right' }}>
+                      {row.delta ?? ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Primary CTA */}
+          {detail.primaryCta && (
+            <div style={{ marginBottom:12 }}>
+              <button style={{
+                width:'100%', height:52, borderRadius:999,
+                background:T.accent, color:T.white,
+                fontSize:16, fontWeight:655, fontVariationSettings:'"wdth" 100',
+                cursor:'pointer', border:'none',
+              }}>{detail.primaryCta}</button>
+            </div>
+          )}
+
+          {/* Feedback block */}
+          {detail.feedbackBlock && (
+            <div style={{ background:T.white, borderRadius:16, border:`1px solid ${T.stroke}`, padding:16, marginBottom:12, textAlign:'center' }}>
+              {fb ? (
+                <p style={{ fontSize:14, color:T.textSub }}>Danke für Ihr Feedback.</p>
+              ) : (
+                <>
+                  <p style={{ fontSize:14, fontWeight:600, color:T.text, marginBottom:12 }}>War die Erklärung hilfreich?</p>
+                  <div style={{ display:'flex', gap:12, justifyContent:'center' }}>
+                    {[{ val:'up', label:'👍 Hilfreich' }, { val:'down', label:'👎 Nicht hilfreich' }].map(({ val, label }) => (
+                      <button key={val} onClick={() => setFb(val)} style={{
+                        flex:1, height:44, borderRadius:999, border:`1px solid ${T.stroke}`,
+                        background:T.bgSubtle, fontSize:14, fontWeight:600, color:T.text, cursor:'pointer',
+                      }}>{label}</button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Secondary CTA */}
+          {detail.secondaryCta && (
+            <button style={{
+              width:'100%', height:52, borderRadius:999,
+              background:'transparent', color:T.text,
+              fontSize:16, fontWeight:655, fontVariationSettings:'"wdth" 100',
+              cursor:'pointer', border:`1.5px solid ${T.stroke}`,
+            }}>{detail.secondaryCta}</button>
+          )}
+
+        </div>
       </div>
     </>
   );

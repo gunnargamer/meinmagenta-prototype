@@ -4,14 +4,14 @@
    ───────────────────────────────────────────────────────────── */
 
 /* ─── User ─────────────────────────────────────────────────── */
-const USER = {
+export const USER = {
   firstName: 'Jana',
   lastName:  'Meyer',
   initials:  'JM',
 };
 
 /* ─── Contracts (shown as tabs + cards on Overview) ────────── */
-const CONTRACTS = [
+export const CONTRACTS = [
   {
     id:      'mobile-1',
     type:    'mobile',
@@ -43,7 +43,7 @@ const CONTRACTS = [
 ];
 
 /* ─── Banners (urgency / promo cards on Overview) ──────────── */
-const BANNERS = [
+export const BANNERS = [
   {
     id:          'bills-ready',
     variant:     'urgent',       // 'urgent' (dark) | 'promo' (light)
@@ -65,7 +65,7 @@ const BANNERS = [
 ];
 
 /* ─── Notifications ─────────────────────────────────────────── */
-const NOTIFS = [
+export const NOTIFS = [
   {
     id:         '1',
     type:       'invoice',

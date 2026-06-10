@@ -1,0 +1,103 @@
+/* ── TeleNeo Variable (lokal) — echte Gewichte 550/655 wie in Figma ── */
+@font-face {
+  font-family: 'TeleNeoWeb';
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/TeleNeoVariable-Upright.woff2') format('woff2-variations');
+}
+
+/* ── ODS Komponenten-Tokens (nicht im npm-Tokens-Paket enthalten;
+     Werte aus Figma-Spec 321:17478 / ODSSegments.css) ── */
+:root {
+  /* ODS-Tokens nutzen light-dark() — Prototype rendert immer Light Mode */
+  color-scheme: light;
+  --ODSSegmentedButton-gap: 8px;
+  --ODSSegmentedButton-borderRadius: 999px;
+  --ODSSegmentedButton-verticalAlignment: center;
+  --ODSSegmentedButton-horizontalAlignment: stretch;
+  --ODSSegmentedButton-width--variant-fill: 100%;
+  --ODSSegmentedButton-padding--size-large: 0;
+  --ODSSegments-borderRadius: 999px;
+  --ODSSegments-minHeight--size-large: 60px;
+  --ODSSegments-minWidth--size-large: 48px;
+  --ODSSegments-width--variant-fill: 100%;
+  --ODSSegments-verticalAlignment: center;
+  --ODSSegments-horizontalAlignment: center;
+  --ODSSegments-Focus-border: 2px solid;
+  --ODSSegments-ContentFrame-gap: 8px;
+  --ODSSegments-ContentFrame-padding: 20px 8px;
+  --ODSSegments-ContentFrame-borderRadius: 999px;
+  --ODSSegments-ContentFrame-verticalAlignment: center;
+  --ODSSegments-ContentFrame-horizontalAlignment: center;
+  --ODSSegments-ContentFrame-flex--variant-fill: 1;
+  --ODSSegments-ContentFrame-minHeight--size-large: 60px;
+  --ODSSegments-ContentFrame-minWidth--size-large: 48px;
+  --ODSSegments-Label-font--size-large: 655 16px/20px 'TeleNeoWeb';
+  --ODSSegments-Label-letterSpacing--size-large: 0px;
+
+}
+
+/* Figma-Mobile-Spec: Buttons sind Pills (Kit-Web-Default ist radius-medium).
+   button.ODSButton schlägt die Kit-Definition auf .ODSButton (Spezifität). */
+button.ODSButton { --ODSButton-ButtonBg-borderRadius: 999px; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #111827;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-family: 'TeleNeoWeb', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+}
+
+#root {
+  width: 390px;
+  height: 844px;
+  position: relative;
+  overflow: hidden;
+  background: #FCFDFE;
+  border-radius: 50px;
+  box-shadow:
+    0 0 0 10px #1c1c1e,
+    0 0 0 12px #3a3a3c,
+    0 40px 80px rgba(0,0,0,0.7);
+}
+
+@media (max-width: 430px) {
+  body { background: #FCFDFE; display: block; min-height: 100dvh; }
+  #root { width: 100%; height: 100dvh; border-radius: 0; box-shadow: none; }
+}
+
+@supports (padding-top: env(safe-area-inset-top)) {
+  @media (max-width: 430px) {
+    #root { padding-top: env(safe-area-inset-top); }
+  }
+}
+
+.scroll-area { overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.scroll-area::-webkit-scrollbar { display: none; }
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.45; } }
+
+.slide-up    { animation: slideUp 0.34s cubic-bezier(0.32,0.72,0,1); }
+.slide-right { animation: slideInRight 0.28s cubic-bezier(0.32,0.72,0,1); }
+.fade-in     { animation: fadeIn 0.18s ease; }
+
+* { -webkit-tap-highlight-color: transparent; }
+button { border: none; background: none; cursor: pointer; padding: 0; }
+
+input { font-family: inherit; }
+
+#root { font-family: 'TeleNeoWeb', -apple-system, 'Helvetica Neue', Arial, sans-serif; }

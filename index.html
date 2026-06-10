@@ -15,27 +15,12 @@
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="data.js"></script>
   <style>
-    /* ── TeleNeoWeb via Telekom Scale CDN ── */
+    /* ── TeleNeo Variable (lokal) — echte Gewichte 550/655 wie in Figma ── */
     @font-face {
-      font-family: 'TeleNeoWeb'; font-weight: 400; font-style: normal; font-display: swap;
-      src: url('https://cdn.jsdelivr.net/npm/@telekom/scale-components/dist/scale-components/fonts/TeleNeoWeb/TeleNeoWeb-Regular.woff2') format('woff2');
-    }
-    @font-face {
-      font-family: 'TeleNeoWeb'; font-weight: 500; font-style: normal; font-display: swap;
-      src: url('https://cdn.jsdelivr.net/npm/@telekom/scale-components/dist/scale-components/fonts/TeleNeoWeb/TeleNeoWeb-Medium.woff2') format('woff2');
-    }
-    @font-face {
-      font-family: 'TeleNeoWeb'; font-weight: 700; font-style: normal; font-display: swap;
-      src: url('https://cdn.jsdelivr.net/npm/@telekom/scale-components/dist/scale-components/fonts/TeleNeoWeb/TeleNeoWeb-Bold.woff2') format('woff2');
-    }
-    @font-face {
-      font-family: 'TeleNeoWeb'; font-weight: 800; font-style: normal; font-display: swap;
-      src: url('https://cdn.jsdelivr.net/npm/@telekom/scale-components/dist/scale-components/fonts/TeleNeoWeb/TeleNeoWeb-ExtraBold.woff2') format('woff2');
-    }
-    @font-face {
-      font-family: 'TeleNeoWeb'; font-weight: 900; font-style: normal; font-display: swap;
-      src: url('https://cdn.jsdelivr.net/npm/@telekom/scale-components/dist/scale-components/fonts/TeleNeoWeb/TeleNeoWeb-Ultra.woff2') format('woff2');
+      font-family: 'TeleNeoWeb'; font-weight: 100 900; font-style: normal; font-display: swap;
+      src: url('Variable/Web (WOFF2)/TeleNeoVariable-Upright.woff2') format('woff2-variations');
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -124,21 +109,8 @@ const T = {
   black:         '#000000',
 };
 
-/* ─── Mock Notifications ──────────────────────────────────── */
-const NOTIFS = [
-  { id:'1', type:'invoice',  headline:'Your bill went up 4,20 € this month',
-    summary:'This increase is expected, no action needed.',
-    service:'Magenta Zuhause Internet', date:'today, 13:16',
-    isNew:true, cta:'See all details', ctaVariant:'primary' },
-  { id:'2', type:'account',  headline:'Change banking details by end of month',
-    summary:'This increase is expected, no action needed.',
-    service:'Account', date:'4.6.26',
-    isNew:false, cta:null },
-  { id:'3', type:'mobile',   headline:'Extra data volume applied',
-    summary:'This increase is expected, no action needed.',
-    service:'Mobile', date:'27.5.26',
-    isNew:false, cta:'Explain me how', ctaVariant:'secondary' },
-];
+/* ─── Mock data loaded from data.js ──────────────────────────*/
+/* USER, CONTRACTS, BANNERS, NOTIFS — edit data.js to change content */
 
 /* ─── SVG Icons (ODS-matched) ─────────────────────────────── */
 const Ic = {
@@ -311,9 +283,9 @@ function TLogo() {
 /* ─── ODS Bottom Navigation ───────────────────────────────── */
 function ODSBottomNav({ active='overview' }) {
   const tabs = [
-    { id:'overview', label:'Home',       Icon:Ic.Home    },
-    { id:'moments',  label:'Moments',    Icon:Ic.Heart   },
-    { id:'ai',       label:'Magenta AI', Icon:Ic.AI      },
+    { id:'overview', label:'Start',    Icon:Ic.Home    },
+    { id:'moments',  label:'Momente',  Icon:Ic.Heart   },
+    { id:'support',  label:'Support',  Icon:Ic.Support },
   ];
   return (
     <div style={{
@@ -402,17 +374,20 @@ function Btn({ label, variant='primary', sm, full, onClick }) {
 }
 
 /* ─── Data usage bar (ODS card detail) ───────────────────── */
-function DataBar({ pct=0.72, used='4.2', total='20' }) {
+function DataBar({ pct=0.72, used='4.2', total='20', dark=false }) {
+  const trackBg = dark ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.25)';
+  const fillBg  = dark ? T.text             : T.white;
+  const subCol  = dark ? T.textSub          : 'rgba(255,255,255,0.65)';
   return (
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:6 }}>
         <p style={{ fontSize:14, fontWeight:500, color:T.text }}>
-          <strong style={{ fontWeight:700 }}>{used} GB</strong> left
+          <strong style={{ fontWeight:700 }}>{used} GB</strong> verbleibend
         </p>
-        <p style={{ fontSize:11, color:'rgba(255,255,255,0.65)' }}>{used} / {total} GB</p>
+        <p style={{ fontSize:11, color:subCol }}>{used} / {total} GB</p>
       </div>
-      <div style={{ height:5, borderRadius:999, background:'rgba(255,255,255,0.25)', overflow:'hidden' }}>
-        <div style={{ width:`${pct*100}%`, height:'100%', background:T.white, borderRadius:999 }}/>
+      <div style={{ height:5, borderRadius:999, background:trackBg, overflow:'hidden' }}>
+        <div style={{ width:`${pct*100}%`, height:'100%', background:fillBg, borderRadius:999 }}/>
       </div>
     </div>
   );
@@ -420,9 +395,7 @@ function DataBar({ pct=0.72, used='4.2', total='20' }) {
 
 /* ─── SCREEN 1: Overview ──────────────────────────────────── */
 function OverviewScreen({ onAvatar, unread, onViewBills }) {
-  const [critDismissed, setCritDismissed] = useState(false);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [activeTab, setActiveTab] = useState('Mobile');
+  const [activeTab, setActiveTab] = useState('Mobil');
 
   return (
     <div style={{ height:'100%', background:T.bg, display:'flex', flexDirection:'column' }}>
@@ -438,14 +411,12 @@ function OverviewScreen({ onAvatar, unread, onViewBills }) {
           {/* Icons List Container: M1 + avatar */}
           <div style={{ display:'flex', alignItems:'center', gap:16 }}>
 
-            {/* ODS M1 badge */}
+            {/* ODS M1 badge — circle per Figma spec */}
             <div style={{
-              height:36, borderRadius:999, background:T.accent,
-              display:'flex', alignItems:'center', justifyContent:'center',
-              padding:'0 12px', gap:1,
+              width:36, height:36, borderRadius:'50%', background:T.accent,
+              display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
             }}>
-              <span style={{ color:T.white, fontSize:14, fontWeight:800, letterSpacing:-0.3 }}>M</span>
-              <span style={{ color:T.white, fontSize:11, fontWeight:700, opacity:0.85, marginTop:1 }}>1</span>
+              <span style={{ color:T.white, fontSize:14, fontWeight:800, letterSpacing:-0.3, fontVariationSettings:'"wdth" 100' }}>M1</span>
             </div>
 
             {/* Avatar with notification badge */}
@@ -466,142 +437,120 @@ function OverviewScreen({ onAvatar, unread, onViewBills }) {
 
         {/* Title: ODS Subtitle + Title M */}
         <div style={{ display:'flex', flexDirection:'column', gap:8, paddingLeft:16, paddingRight:16 }}>
-          <p style={{ fontSize:22, fontWeight:655, color:T.text, lineHeight:'22px', fontVariationSettings:'"wdth" 100' }}>Welcome back,</p>
-          <p style={{ fontSize:28, fontWeight:655, color:T.text, lineHeight:'28px', fontVariationSettings:'"wdth" 100' }}>Jana Meyer</p>
+          <p style={{ fontSize:20, fontWeight:550, color:T.text, lineHeight:'26px', fontVariationSettings:'"wdth" 100' }}>Willkommen zurück,</p>
+          <p style={{ fontSize:32, fontWeight:655, color:T.text, lineHeight:'32px', fontVariationSettings:'"wdth" 100' }}>Jana Meyer</p>
         </div>
 
-        {/* ODS sub-tabs: Mobile · Home · TV */}
-        <div style={{ display:'flex', gap:0, paddingLeft:16, paddingRight:16, borderBottom:`1px solid ${T.stroke}` }}>
-          {['Mobile','Home','TV'].map(tab => (
-            <button key={tab} onClick={()=>setActiveTab(tab)} style={{
-              padding:'6px 16px 8px',
-              fontSize:14, fontWeight:700,
-              color: activeTab===tab ? T.accent : T.textSub,
-              borderBottom: activeTab===tab ? `2.5px solid ${T.accent}` : '2.5px solid transparent',
-              marginBottom:-1, cursor:'pointer', background:'none',
-              transition:'color 0.15s',
-              display:'flex', alignItems:'center', gap:5,
-            }}>
-              {tab}
-              {tab==='Home' && (
-                <span style={{ width:7, height:7, borderRadius:'50%', background:T.accent, display:'inline-block', marginLeft:2 }}/>
-              )}
-            </button>
-          ))}
+        {/* ODS Segmented Control — Figma: pill container, active=accent fill */}
+        <div style={{ padding:'0 8px 16px' }}>
+          <div style={{ display:'flex', background:T.bgSubtle, borderRadius:40, gap:8 }}>
+            {[
+              { id:'Mobil',    label:'Mobil',    badge:null },
+              { id:'Internet', label:'Internet', badge:1    },
+              { id:'TV',       label:'TV',       badge:null },
+            ].map(tab => (
+              <button key={tab.id} onClick={()=>setActiveTab(tab.id)} style={{
+                flex:1, borderRadius:60, padding:'20px 8px',
+                fontSize:16, fontWeight:655, lineHeight:'20px', fontVariationSettings:'"wdth" 100',
+                background: activeTab===tab.id ? T.accent : 'transparent',
+                color: activeTab===tab.id ? T.white : T.text,
+                cursor:'pointer', border:'none', transition:'background 0.15s',
+                display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+              }}>
+                {tab.label}
+                {tab.badge != null && activeTab!==tab.id && (
+                  <span style={{
+                    minWidth:16, height:16, borderRadius:999, background:T.accent,
+                    display:'inline-flex', alignItems:'center', justifyContent:'center',
+                    padding:'0 4px', flexShrink:0,
+                  }}>
+                    <span style={{ color:T.white, fontSize:10, fontWeight:700, lineHeight:1 }}>{tab.badge}</span>
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* ── Scrollable content ── */}
-      <div className="scroll-area" style={{ flex:1, padding:'12px 16px', paddingBottom:100 }}>
+      <div className="scroll-area" style={{ flex:1, padding:'0 8px', paddingBottom:100 }}>
 
-        {/* Critical Notification card (ODS: dark bg, stacked) */}
-        {!critDismissed && (
-          <div style={{ background:'#191919', borderRadius:16, overflow:'hidden', marginBottom:14 }}>
-            <div style={{ padding:'14px 16px 14px', color:T.white }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 }}>
-                <div style={{ display:'flex', gap:6, alignItems:'center' }}>
-                  <div style={{ width:8, height:8, borderRadius:'50%', background:T.red, flexShrink:0, animation:'pulse 2s infinite' }}/>
-                  <span style={{ fontSize:11, fontWeight:700, color:'#999', textTransform:'uppercase', letterSpacing:0.8, fontVariationSettings:'"wdth" 100' }}>Urgent</span>
-                </div>
-                <button onClick={()=>setCritDismissed(true)} style={{ color:'#666', cursor:'pointer', padding:2, lineHeight:0 }}>
-                  <Ic.X color="#666" />
-                </button>
-              </div>
-              <p style={{ fontSize:17, fontWeight:700, lineHeight:'22px', marginBottom:3, fontVariationSettings:'"wdth" 100' }}>Your bills are ready</p>
-              <p style={{ fontSize:13, color:'#999', lineHeight:'17px', marginBottom:14, fontVariationSettings:'"wdth" 100' }}>2 invoices awaiting payment · Due 15 Jun</p>
-              <Btn label="View bills" sm onClick={onViewBills} />
-            </div>
-          </div>
-        )}
-
-        {/* ── Active contract card (teal, ODS-accurate) ── */}
-        <div style={{ background:T.bgCard, borderRadius:16, overflow:'hidden', marginBottom:12 }}>
-          <div style={{ padding:'16px 16px 14px' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-              <div style={{ flex:1 }}>
-                <p style={{ fontSize:17, fontWeight:800, color:T.text, lineHeight:'22px', fontVariationSettings:'"wdth" 100' }}>Magenta XL</p>
-                <p style={{ fontSize:13, color:'rgba(0,0,0,0.55)', marginTop:1, marginBottom:14, fontVariationSettings:'"wdth" 100' }}>+49 111 111 1111</p>
-                <DataBar pct={0.58} />
-              </div>
-              {/* Placeholder phone visual */}
-              <div style={{
-                width:56, height:88, marginLeft:12, flexShrink:0,
-                background:'rgba(255,255,255,0.45)', borderRadius:10,
-                border:'1.5px solid rgba(255,255,255,0.7)',
-                display:'flex', alignItems:'center', justifyContent:'center',
-              }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <rect x="5" y="1" width="14" height="22" rx="3" stroke="rgba(0,0,0,0.4)" strokeWidth="1.5"/>
-                  <circle cx="12" cy="19.5" r="1" fill="rgba(0,0,0,0.35)"/>
-                  <rect x="8" y="3.5" width="8" height="1" rx="0.5" fill="rgba(0,0,0,0.25)"/>
-                </svg>
-              </div>
-            </div>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', marginTop:10 }}>
-              <Ic.Arrow />
-            </div>
+        {/* ── Card 1: Contract (ODS Anchored Image Card) ── */}
+        <div style={{ background:T.bgSubtle, borderRadius:16, overflow:'hidden', marginBottom:16, position:'relative' }}>
+          {/* M1 badge top-right */}
+          <div style={{
+            position:'absolute', top:12, right:12,
+            width:36, height:36, borderRadius:'50%', background:T.accent,
+            display:'flex', alignItems:'center', justifyContent:'center', zIndex:1,
+          }}>
+            <span style={{ color:T.white, fontSize:12, fontWeight:800, fontVariationSettings:'"wdth" 100' }}>M1</span>
           </div>
 
-          {/* Inline notification banner */}
-          {!bannerDismissed && (
-            <div style={{
-              background:'rgba(255,255,255,0.82)',
-              borderTop:'1px solid rgba(0,0,0,0.07)',
-              padding:'11px 14px',
-              display:'flex', alignItems:'flex-start', gap:10,
-            }}>
-              <div style={{ flex:1 }}>
-                <p style={{ fontSize:13, color:T.text, lineHeight:'17px', fontWeight:500 }}>
-                  Travelling? Get the roaming package that best fits you ✈️
-                </p>
-              </div>
-              <button onClick={()=>setBannerDismissed(true)} style={{ color:T.textSub, cursor:'pointer', flexShrink:0, marginTop:1 }}>
-                <Ic.X />
-              </button>
-            </div>
-          )}
-          {!bannerDismissed && (
-            <div style={{ padding:'0 14px 14px', background:'rgba(255,255,255,0.82)' }}>
-              <Btn label="Browse Roaming" sm />
-            </div>
-          )}
-        </div>
-
-        {/* ── Secondary contract card (ODS: #f1f1f1 subtle bg) ── */}
-        <div style={{ background:'#f1f1f1', borderRadius:15, padding:'16px', marginBottom:12 }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+          <div style={{ display:'flex', alignItems:'flex-start', padding:'20px 16px 16px' }}>
+            {/* Left: number + product + data bar */}
             <div style={{ flex:1 }}>
-              <p style={{ fontSize:17, fontWeight:800, color:T.text, lineHeight:'22px', fontVariationSettings:'"wdth" 100' }}>Magenta L</p>
-              <p style={{ fontSize:13, color:T.textSub, marginTop:1, marginBottom:14, fontVariationSettings:'"wdth" 100' }}>+49 222 222 2222</p>
-              <DataBar pct={0.35} />
+              <p style={{ fontSize:22, fontWeight:800, color:T.text, lineHeight:'26px', fontVariationSettings:'"wdth" 100', marginBottom:2 }}>+49 111 111 1111</p>
+              <p style={{ fontSize:13, color:T.textSub, marginBottom:16, fontVariationSettings:'"wdth" 100' }}>MagentaMobil PlusKarte</p>
+              <DataBar pct={0.58} dark />
             </div>
+            {/* Right: phone image placeholder */}
             <div style={{
-              width:46, height:46, borderRadius:'50%', marginLeft:12, flexShrink:0,
-              background:'linear-gradient(135deg,#c0392b,#922b21)',
-              overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center',
+              width:80, height:110, marginLeft:16, flexShrink:0, borderRadius:12,
+              background:'rgba(0,0,0,0.06)',
+              display:'flex', alignItems:'center', justifyContent:'center',
             }}>
-              <svg width="46" height="46" viewBox="0 0 46 46">
-                <circle cx="23" cy="23" r="23" fill="#c0392b"/>
-                <circle cx="23" cy="18" r="8" fill="#f1948a"/>
-                <ellipse cx="23" cy="42" rx="14" ry="10" fill="#f1948a"/>
+              <svg width="32" height="54" viewBox="0 0 32 54" fill="none">
+                <rect x="1" y="1" width="30" height="52" rx="5" stroke="rgba(0,0,0,0.25)" strokeWidth="1.5"/>
+                <circle cx="16" cy="47" r="2" fill="rgba(0,0,0,0.2)"/>
+                <rect x="10" y="4" width="12" height="1.5" rx="0.75" fill="rgba(0,0,0,0.15)"/>
               </svg>
             </div>
           </div>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', marginTop:10 }}>
+          <div style={{ display:'flex', justifyContent:'flex-end', padding:'0 16px 12px' }}>
             <Ic.Arrow />
           </div>
         </div>
 
-        {/* ── Manage bills row ── */}
-        <div style={{ background:'#f1f1f1', borderRadius:15, padding:'16px', marginBottom:12, display:'flex', alignItems:'center', justifyContent:'space-between', cursor:'pointer' }}>
-          <span style={{ fontSize:16, fontWeight:600, color:T.text }}>Manage bills</span>
+        {/* ── Card 2: Rechnungen verwalten (Quick Action Card) ── */}
+        <div style={{ background:T.bgSubtle, borderRadius:16, padding:'24px', marginBottom:16, display:'flex', alignItems:'center', gap:24, cursor:'pointer' }} onClick={onViewBills}>
+          <div style={{ flex:1 }}>
+            <p style={{ fontSize:20, fontWeight:655, color:T.text, lineHeight:'24px', fontVariationSettings:'"wdth" 100', marginBottom:4 }}>Rechnungen verwalten</p>
+            <p style={{ fontSize:16, fontWeight:655, color:T.text, lineHeight:'20px', fontVariationSettings:'"wdth" 100', marginBottom:16 }}>Rechnungskonto 483 348 491 48</p>
+            <div style={{ display:'inline-flex', alignItems:'center', height:24, padding:'0 10px', borderRadius:6, background:T.bgSubtle, border:`1px solid ${T.stroke}` }}>
+              <span style={{ fontSize:12, fontWeight:655, color:T.textSub, fontVariationSettings:'"wdth" 100' }}>Fällig: 15. Juni</span>
+            </div>
+          </div>
           <Ic.Arrow />
         </div>
 
-        {/* Hint */}
-        <p style={{ fontSize:12, color:T.textSub, textAlign:'center', padding:'8px 0' }}>
-          Tap the avatar ↑ to open your profile
-        </p>
+        {/* ── Card 3: Promo Carousel (teal) ── */}
+        <div style={{ background:T.bgCard, borderRadius:16, overflow:'hidden', marginBottom:16 }}>
+          <div style={{ display:'flex', alignItems:'flex-start', padding:'20px 16px 16px', gap:12 }}>
+            <div style={{ flex:1 }}>
+              <p style={{ fontSize:15, fontWeight:655, color:T.text, lineHeight:'20px', fontVariationSettings:'"wdth" 100' }}>
+                Neues iPhone 16: 3 Kameras, neue Farben. Jetzt in den Shops ansehen oder direkt in der App bestellen.
+              </p>
+            </div>
+            {/* Image placeholder */}
+            <div style={{
+              width:72, height:90, borderRadius:10, flexShrink:0,
+              background:'rgba(0,0,0,0.10)',
+              display:'flex', alignItems:'center', justifyContent:'center',
+            }}>
+              <svg width="28" height="46" viewBox="0 0 28 46" fill="none">
+                <rect x="1" y="1" width="26" height="44" rx="4" stroke="rgba(0,0,0,0.2)" strokeWidth="1.2"/>
+                <circle cx="14" cy="40" r="1.5" fill="rgba(0,0,0,0.15)"/>
+              </svg>
+            </div>
+          </div>
+          {/* Carousel dots */}
+          <div style={{ display:'flex', justifyContent:'center', alignItems:'center', gap:6, paddingBottom:14 }}>
+            {[0,1,2,3,4].map(i => (
+              <div key={i} style={{ width: i===0 ? 8 : 6, height: i===0 ? 8 : 6, borderRadius:'50%', background: i===0 ? T.text : 'rgba(0,0,0,0.2)' }} />
+            ))}
+          </div>
+        </div>
       </div>
 
       <ODSBottomNav active="overview" />
@@ -639,8 +588,8 @@ function ProfileSheet({ onClose, onNotifs, unread }) {
 
         {/* Menu */}
         {[
-          { icon:<Ic.Bell color={T.accent}/>, label:'Notifications', badge:unread, action:onNotifs, bold:true },
-          { icon:<Ic.Settings />,             label:'Settings',                    action:onClose },
+          { icon:<Ic.Bell color={T.accent}/>, label:'Benachrichtigungen', badge:unread, action:onNotifs, bold:true },
+          { icon:<Ic.Settings />,             label:'Einstellungen',               action:onClose },
           { icon:<Ic.Grid />,                 label:'Manage and connect services', action:onClose },
           { icon:<Ic.Package />,              label:'Order Management',            action:onClose },
           { icon:<Ic.LogOut />,               label:'Log out',                     action:onClose, red:true },
@@ -729,9 +678,9 @@ function NotifCenter({ onBack, onCard, notifs }) {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState('all');
   const filters = [
-    { id:'all', label:'All' },
-    { id:'invoice', label:'Invoices' },
-    { id:'contract', label:'Contracts' },
+    { id:'all', label:'Alle' },
+    { id:'invoice', label:'Rechnungen' },
+    { id:'contract', label:'Verträge' },
   ];
   const filtered = notifs.filter(n => {
     const fok = filter==='all' || n.type===filter;
@@ -752,7 +701,7 @@ function NotifCenter({ onBack, onCard, notifs }) {
           </button>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <h1 style={{ fontSize:20, fontWeight:655, color:T.text, fontVariationSettings:'"wdth" 100', lineHeight:'24px' }}>Notifications</h1>
+          <h1 style={{ fontSize:20, fontWeight:655, color:T.text, fontVariationSettings:'"wdth" 100', lineHeight:'24px' }}>Benachrichtigungen</h1>
           <Badge n={unread} />
         </div>
         <div style={{ flex:1 }} />
@@ -766,7 +715,7 @@ function NotifCenter({ onBack, onCard, notifs }) {
           border:`2px solid ${T.accent}`,
         }}>
           <input value={q} onChange={e=>setQ(e.target.value)}
-            placeholder="What are you looking for?"
+            placeholder="Wonach suchen Sie?"
             style={{ flex:1, background:'none', border:'none', outline:'none',
               fontSize:16, fontWeight:655, color: q ? T.text : T.textSub,
               fontVariationSettings:'"wdth" 100' }}/>
@@ -787,9 +736,9 @@ function NotifCenter({ onBack, onCard, notifs }) {
             <button key={f.id} onClick={()=>setFilter(f.id)} style={{
               flexShrink:0, borderRadius:999, padding:'8px 16px', cursor:'pointer',
               fontSize:14, fontWeight:655, fontVariationSettings:'"wdth" 100',
-              background: active ? T.dark : T.white,
+              background: active ? T.text : T.white,
               color: active ? T.white : T.text,
-              border: `1px solid ${active ? T.dark : T.stroke}`,
+              border: `1px solid ${active ? T.text : T.stroke}`,
               display:'flex', alignItems:'center', gap:6,
               transition:'background 0.15s',
             }}>
@@ -807,8 +756,8 @@ function NotifCenter({ onBack, onCard, notifs }) {
             <div style={{ width:72, height:72, borderRadius:'50%', background:T.bgSubtle, display:'flex', alignItems:'center', justifyContent:'center' }}>
               <Ic.Bell size={32} />
             </div>
-            <p style={{ fontSize:18, fontWeight:655, color:T.text }}>No matching notifications</p>
-            <p style={{ fontSize:14, color:T.textSub, textAlign:'center', maxWidth:240 }}>Try another filter or search term.</p>
+            <p style={{ fontSize:18, fontWeight:655, color:T.text }}>Keine Benachrichtigungen gefunden</p>
+            <p style={{ fontSize:14, color:T.textSub, textAlign:'center', maxWidth:240 }}>Anderen Filter oder Suchbegriff verwenden.</p>
           </div>
         ) : (
           filtered.map(n => <NotifCard key={n.id} n={n} onTap={n.cta ? onCard : null} />)
@@ -845,7 +794,7 @@ function InvoiceDetail({ onBack }) {
                 <Ic.Back />
               </button>
             </div>
-            <h1 style={{ fontSize:18, fontWeight:655, color:T.text, fontVariationSettings:'"wdth" 100', lineHeight:'23px', textAlign:'center' }}>Internet Bill — June 2026</h1>
+            <h1 style={{ fontSize:18, fontWeight:655, color:T.text, fontVariationSettings:'"wdth" 100', lineHeight:'23px', textAlign:'center' }}>Rechnung Internet — Juni 2026</h1>
             <div style={{ flex:1 }} />
           </div>
         </div>
@@ -861,14 +810,14 @@ function InvoiceDetail({ onBack }) {
           <div style={{ background:`linear-gradient(135deg,${T.accent}12,${T.accent}05)`, padding:'16px 16px 12px', borderBottom:`1px solid ${T.stroke}` }}>
             <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
               <div style={{ width:28, height:28, borderRadius:'50%', background:T.accent, display:'flex', alignItems:'center', justifyContent:'center', color:T.white, fontSize:12, fontWeight:800 }}>AI</div>
-              <span style={{ fontSize:12, fontWeight:600, color:T.textSub }}>Magenta AI Explanation</span>
+              <span style={{ fontSize:12, fontWeight:600, color:T.textSub }}>Magenta AI Erklärung</span>
             </div>
-            <h2 style={{ fontSize:20, fontWeight:800, lineHeight:'25px', color:T.text, fontVariationSettings:'"wdth" 100' }}>Your bill went up €4.20 this month</h2>
+            <h2 style={{ fontSize:20, fontWeight:800, lineHeight:'25px', color:T.text, fontVariationSettings:'"wdth" 100' }}>Ihre Rechnung ist um 4,20 € gestiegen</h2>
           </div>
 
           <div style={{ padding:16 }}>
             <p style={{ fontSize:15, color:T.textSub, lineHeight:'21px', marginBottom:14 }}>
-              Your 6-month promotional discount ended on 1 June. This is the regular rate for your Fibre 1000 plan.
+              Ihr 6-Monats-Rabatt ist am 1. Juni ausgelaufen. Das ist jetzt der reguläre Preis für Ihren Fibre 1000 Tarif.
             </p>
 
             {/* Anomaly chip */}
@@ -876,7 +825,7 @@ function InvoiceDetail({ onBack }) {
               <div style={{ width:20, height:20, borderRadius:'50%', background:T.success, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                 <Ic.Check />
               </div>
-              <p style={{ fontSize:13, color:T.success, fontWeight:700 }}>This increase is expected — no action needed</p>
+              <p style={{ fontSize:13, color:T.success, fontWeight:700 }}>Diese Erhöhung ist planmäßig – Sie müssen nichts tun.</p>
             </div>
 
             {/* Collapsible detail */}
@@ -886,7 +835,7 @@ function InvoiceDetail({ onBack }) {
               borderBottom: expanded ? 'none' : `1px solid ${T.stroke}`,
               cursor:'pointer', background:'none',
             }}>
-              <span style={{ fontSize:14, fontWeight:700, color:T.text }}>What changed vs. last month</span>
+              <span style={{ fontSize:14, fontWeight:700, color:T.text }}>Was hat sich geändert?</span>
               <span style={{ transform: expanded?'rotate(180deg)':'none', transition:'transform 0.2s' }}>
                 <Ic.ChevronDown />
               </span>
@@ -895,9 +844,9 @@ function InvoiceDetail({ onBack }) {
             {expanded && (
               <div className="fade-in" style={{ borderBottom:`1px solid ${T.stroke}`, paddingBottom:12, marginBottom:0 }}>
                 {[
-                  { item:'Fibre 1000 base rate',   was:'€54.95', now:'€54.95', delta:null },
-                  { item:'6-month promo discount',  was:'−€4.20', now:'€0.00',  delta:'+€4.20' },
-                  { item:'Router rental',           was:'€4.00',  now:'€4.00',  delta:null },
+                  { item:'Fibre 1000 Grundpreis',  was:'€54,95', now:'€54,95', delta:null },
+                  { item:'6-Monats-Rabatt',         was:'−€4,20', now:'€0,00',  delta:'+€4,20' },
+                  { item:'Router-Miete',            was:'€4,00',  now:'€4,00',  delta:null },
                 ].map(r => (
                   <div key={r.item} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'9px 0', borderBottom:`1px solid ${T.stroke}50` }}>
                     <span style={{ fontSize:13, color:T.text, flex:1 }}>{r.item}</span>
@@ -909,7 +858,7 @@ function InvoiceDetail({ onBack }) {
                   </div>
                 ))}
                 <div style={{ display:'flex', justifyContent:'space-between', padding:'10px 0', fontWeight:700 }}>
-                  <span style={{ fontSize:14 }}>Total this month</span>
+                  <span style={{ fontSize:14 }}>Gesamt diesen Monat</span>
                   <span style={{ fontSize:16, color:T.accent }}>€58.95</span>
                 </div>
               </div>
@@ -917,15 +866,15 @@ function InvoiceDetail({ onBack }) {
           </div>
         </div>
 
-        <Btn label="View full PDF" full />
+        <Btn label="Rechnung als PDF" full />
 
         {/* Was this helpful? */}
         <div style={{ background:T.white, borderRadius:16, padding:16, margin:'12px 0', border:`1px solid ${T.stroke}`, display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
-          <p style={{ fontSize:14, fontWeight:700 }}>Was this explanation helpful?</p>
+          <p style={{ fontSize:14, fontWeight:700 }}>War die Erklärung hilfreich?</p>
           <div style={{ display:'flex', gap:28 }}>
             {[
-              { type:'up',   Icon:Ic.ThumbUp,   label:'Helpful',     col:T.success },
-              { type:'down', Icon:Ic.ThumbDown, label:'Not helpful', col:T.destructive },
+              { type:'up',   Icon:Ic.ThumbUp,   label:'Hilfreich',       col:T.success },
+              { type:'down', Icon:Ic.ThumbDown, label:'Nicht hilfreich', col:T.destructive },
             ].map(({ type, Icon, label, col }) => (
               <button key={type} onClick={()=>setFb(type)} style={{
                 display:'flex', flexDirection:'column', alignItems:'center', gap:5,
@@ -938,13 +887,13 @@ function InvoiceDetail({ onBack }) {
           </div>
           {fb && (
             <p className="fade-in" style={{ fontSize:12, color:T.success, fontWeight:700, background:T.success+'12', padding:'6px 16px', borderRadius:999 }}>
-              {fb==='up' ? 'Thanks for the feedback! 👍' : 'Thanks — we\'ll improve this.'}
+              {fb==='up' ? 'Danke für Ihr Feedback! 👍' : 'Danke – wir verbessern das.'}
             </p>
           )}
         </div>
 
         <div style={{ marginTop:4 }}>
-          <Btn label="Get help" variant="secondary" full />
+          <Btn label="Hilfe anfordern" variant="secondary" full />
         </div>
       </div>
       </div>
